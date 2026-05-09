@@ -1,11 +1,10 @@
-import { Geist, Geist_Mono, Outfit, DM_Sans } from "next/font/google"
+import { DM_Sans, Geist_Mono, Outfit } from "next/font/google";
 
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+import "./globals.css";
 
 const dmSansHeading = DM_Sans({subsets:['latin'],variable:'--font-heading'});
-
 const outfit = Outfit({subsets:['latin'],variable:'--font-sans'})
 
 const fontMono = Geist_Mono({
