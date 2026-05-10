@@ -2,10 +2,7 @@ import type { Row, RowData } from "@tanstack/react-table"
 
 import { formatLastActive } from "@/shared/lib/format"
 
-/**
- * Column filter: matches substring against ISO storage and locale-formatted display
- * (so queries like "may", "2026", "pm" work alongside ISO fragments).
- */
+/** Substring match on ISO value and locale-formatted display text. */
 export function isoDateTimeIncludesFilter<TData extends RowData>(
   row: Row<TData>,
   columnId: string,

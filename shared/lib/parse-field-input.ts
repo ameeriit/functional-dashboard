@@ -1,4 +1,4 @@
-/** Devanagari digits (Nepali / Hindi numerals, Unicode U+0966–U+096F) → ASCII 0–9 */
+/** Devanagari numerals → ASCII digits. */
 export function normalizeNepaliDigitsToAscii(input: string): string {
   const digits = "०१२३४५६७८९"
   let out = ""
@@ -9,7 +9,7 @@ export function normalizeNepaliDigitsToAscii(input: string): string {
   return out
 }
 
-/** Normalize free-form phone input toward E.164 (best-effort; assumes NANP when 10 digits). */
+/** Best-effort E.164; 10-digit input treated as NANP +1. */
 export function normalizePhoneE164(input: string): string {
   const raw = normalizeNepaliDigitsToAscii(String(input ?? "").trim())
   if (!raw) return ""
@@ -22,7 +22,7 @@ export function normalizePhoneE164(input: string): string {
   return `+${digits}`
 }
 
-/** Parse currency-like text ($, commas, spaces) or accept an existing finite number. */
+/** Parse $ / commas / string or finite number. */
 export function parseCurrencyInput(input: unknown): number {
   if (typeof input === "number") {
     return Number.isFinite(input) ? input : Number.NaN
@@ -36,7 +36,7 @@ export function parseCurrencyInput(input: unknown): number {
   return Number.isFinite(n) ? n : Number.NaN
 }
 
-/** Parse percentage text (% optional) or accept an existing finite number. */
+/** Parse optional `%` suffix or finite number. */
 export function parsePercentageInput(input: unknown): number {
   if (typeof input === "number") {
     return Number.isFinite(input) ? input : Number.NaN
@@ -54,7 +54,7 @@ const currencyDraftFormatter = new Intl.NumberFormat(undefined, {
   useGrouping: true,
 })
 
-/** Whole-dollar grouping for the currency editor when not focused on partial input. */
+/** Grouped whole dollars for the currency field. */
 export function formatCurrencyDraft(value: unknown): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return ""
   return currencyDraftFormatter.format(value)
@@ -65,7 +65,7 @@ const percentageDraftFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 2,
 })
 
-/** Up to two decimal places for the percentage editor (no % suffix; UI adds it). */
+/** Two decimals max; `%` is rendered beside the field. */
 export function formatPercentageDraft(value: unknown): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return ""
   return percentageDraftFormatter.format(value)

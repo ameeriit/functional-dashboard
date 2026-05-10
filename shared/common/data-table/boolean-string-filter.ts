@@ -1,6 +1,5 @@
 import type { Row, RowData } from "@tanstack/react-table"
 
-/** Select filter values `"true"` | `"false"` against boolean cell values. */
 export function booleanStringEqualsFilter<TData extends RowData>(
   row: Row<TData>,
   columnId: string,

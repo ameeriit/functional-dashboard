@@ -9,16 +9,16 @@ export type User = {
   role: UserRole
   status: UserStatus
   lastActive: string
-  /** E.164, e.g. +14155552671 */
+  /** E.164 */
   phone: string
-  /** Whole USD dollars for mock data */
+  /** USD, whole dollars */
   annualSalary: number
   /** 0–100 */
   bonusPercent: number
-  /** ISO date-only string YYYY-MM-DD */
+  /** `YYYY-MM-DD` */
   hireDate: string
   notificationsEnabled: boolean
   marketingOptIn: boolean
-  /** Paid-time-off balance (days); demos plain {@link DataTableInputType | number} editing vs currency. */
+  /** PTO days */
   ptoDays: number
 }

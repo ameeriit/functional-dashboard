@@ -14,7 +14,6 @@ const FIELD_LABELS: Partial<Record<keyof User, string>> = {
   marketingOptIn: "marketing emails",
 }
 
-/** Toast copy summarizing which fields changed after save. */
 export function describePatch(patch: Partial<User>): string {
   const fields = (Object.keys(patch) as (keyof User)[])
     .map((k) => FIELD_LABELS[k])

@@ -259,7 +259,6 @@ export function buildUserColumns(
       enableColumnFilter: false,
       meta: {
         filterVariant: "none",
-        /** Lets global search match the same locale string users see in the cell. */
         globalFilterText: (v) => formatLastActive(String(v ?? "")),
       },
       cell: ({ getValue }) => (

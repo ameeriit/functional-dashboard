@@ -401,7 +401,7 @@ const mockUsers: User[] = [
   },
 ]
 
-/** In-memory mock API shared by dashboard stats and the Users table (not a real backend). */
+/** In-memory mock user list. */
 export async function getUsers(): Promise<User[]> {
   return mockUsers
 }
@@ -431,7 +431,7 @@ export async function deleteUser(id: string): Promise<{ id: string }> {
   return { id }
 }
 
-/** Server-style paginated read over the in-memory mock store (simulated latency). */
+/** Query payload for paginated mock fetch (simulated latency). */
 export type WorkspaceUsersPageQuery = {
   pageIndex: number
   pageSize: number

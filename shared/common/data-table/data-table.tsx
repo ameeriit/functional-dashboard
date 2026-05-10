@@ -105,10 +105,6 @@ export type DataTableQuerySnapshot = {
   globalFilter: string
 }
 
-/**
- * Filters, global search, and pagination use local React state.
- * Editable cells use React Hook Form (`useForm` + `Controller` via `DataTableCellEditor`).
- */
 export type DataTableProps<
   TData extends object,
   TFormValues extends FieldValues = FieldValues,
@@ -121,7 +117,6 @@ export type DataTableProps<
   onSave?: (row: TData, patch: Partial<TData>) => void | Promise<void>
   onDelete?: (row: TData) => void | Promise<void>
   deleteConfirm?: DeleteConfirm<TData>
-  /** When set without `draftResolver`, the table uses `zodResolver(draftSchema)`. */
   draftSchema?: ZodTypeAny
   draftResolver?: Resolver<TFormValues>
   getDraftDefaults?: (row: TData) => TFormValues
@@ -137,24 +132,18 @@ export type DataTableProps<
   >
   emptyState?: React.ReactNode
   className?: string
-  /** Client-side page size (TanStack pagination). */
   initialPageSize?: number
   pageSizeOptions?: number[]
   showColumnFilters?: boolean
-  /** Announced as the table caption for assistive tech (visually hidden; pair with a visible heading nearby). */
   tableCaption?: string
-  /** Delay before global filter is applied (server queries, expensive filtering). */
   debounceGlobalSearchMs?: number
   manualPagination?: boolean
   manualSorting?: boolean
   manualFiltering?: boolean
-  /** Total rows after filtering when using manual pagination (required when `manualPagination` is true). */
   rowCount?: number
-  /** Persist sorting, filters, pagination, column visibility, and search draft to localStorage. */
   persistenceKey?: string
   isLoading?: boolean
   fetchError?: string | null
-  /** Fires when debounced global filter, pagination, sorting, or column filters change. */
   onQueryChange?: (snapshot: DataTableQuerySnapshot) => void
   showColumnVisibility?: boolean
 }
@@ -720,7 +709,6 @@ export function DataTable<
     },
   })
 
-  /** Horizontal padding lives on the header stack so title + filter share one inset. */
   const filterControlClass =
     "h-8 min-h-8 w-full min-w-[5.5rem] max-w-full px-0 text-xs"
 
@@ -891,7 +879,6 @@ export function DataTable<
     12
   )
 
-  /** Matches `CardHeader` inset when this table sits inside `Card` (`group/card`). */
   const cardHeaderInsetX = "px-4 group-data-[size=sm]/card:px-3"
 
   return (

@@ -2,7 +2,6 @@
 
 import * as React from "react"
 
-/** Returns `value` after it stops changing for `ms` milliseconds (`ms <= 0` updates synchronously). */
 export function useDebouncedValue<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = React.useState(value)
 

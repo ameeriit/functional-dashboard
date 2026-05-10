@@ -2,11 +2,7 @@ import type { RowData } from "@tanstack/react-table"
 import type { PropsWithChildren, ReactNode } from "react"
 import type { Control, FieldValues } from "react-hook-form"
 
-/**
- * Built-in cell editors implemented by `DataTableCellEditor`.
- * Add primitives by extending `DATA_TABLE_BUILTIN_INPUT_TYPES` and `BUILTIN_CELL_EDITORS` in `cell-editors.tsx`;
- * one-off fields can use `ColumnMeta.renderEditor` or `DataTable` `customEditors`.
- */
+/** Builtin `meta.inputType` values; editors live in `cell-editors.tsx`. */
 export const DATA_TABLE_BUILTIN_INPUT_TYPES = [
   "text",
   "number",
@@ -41,13 +37,11 @@ declare module "@tanstack/react-table" {
     options?: ReadonlyArray<{ value: string; label: string }>
     align?: "left" | "right" | "center"
     filterVariant?: DataTableFilterVariant
-    /** When `filterVariant` is `"select"`. */
     filterOptions?: ReadonlyArray<{ value: string; label: string }>
     enableSorting?: boolean
     enableColumnFilter?: boolean
     enableResizing?: boolean
     includeInGlobalFilter?: boolean
-    /** Extra display-derived text included in global search (raw cell value is always searched too). */
     globalFilterText?: (cellValue: unknown) => string | undefined
     renderEditor?: (ctx: {
       control: Control<FieldValues>

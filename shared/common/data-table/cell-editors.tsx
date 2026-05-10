@@ -70,7 +70,6 @@ function FieldHint({
   )
 }
 
-/** Constrains editors + helper/error copy to the cell width; text-align matches column meta. */
 function CellEditorShell({
   align = "left",
   children,
@@ -563,7 +562,6 @@ type AnyBuiltinEditorFn = (
   props: BuiltinEditorProps<FieldValues>
 ) => ReactElement
 
-/** Extend here when adding a new built-in `meta.inputType`. */
 const BUILTIN_CELL_EDITORS: Partial<
   Record<DataTableBuiltinInputType, AnyBuiltinEditorFn>
 > = {
@@ -584,7 +582,6 @@ type CellEditorProps<T extends FieldValues> = {
   inputType: DataTableInputType | undefined
   options?: ReadonlyArray<{ value: string; label: string }>
   autoFocus?: boolean
-  /** From column `meta.align`; toggles default to centered helpers when omitted. */
   cellAlign?: "left" | "right" | "center"
   customEditors?: Partial<
     Record<

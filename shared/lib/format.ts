@@ -37,7 +37,7 @@ export function formatIsoDate(isoDate: string) {
   })
 }
 
-/** Display-only formatting for E.164 stored values */
+/** E.164 → national-style display. */
 export function formatPhoneNational(e164: string) {
   const digits = e164.replace(/\D/g, "")
   if (digits.length === 11 && digits.startsWith("1")) {
