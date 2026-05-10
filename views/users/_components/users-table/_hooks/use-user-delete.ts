@@ -5,13 +5,13 @@ import { deleteUser } from "@/views/users/api/users-data"
 import type { User } from "@/views/users/entities/types"
 
 export function useUserDelete(
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>
+  setRows: React.Dispatch<React.SetStateAction<User[]>>
 ) {
   const handleDelete = React.useCallback(
     async (user: User) => {
       try {
         await deleteUser(user.id)
-        setUsers((prev) => prev.filter((u) => u.id !== user.id))
+        setRows((prev) => prev.filter((u) => u.id !== user.id))
         toast.error(`Removed ${user.name}`, {
           description: `${user.email} no longer has access.`,
         })
@@ -23,7 +23,7 @@ export function useUserDelete(
         throw error
       }
     },
-    [setUsers]
+    [setRows]
   )
 
   return { handleDelete }

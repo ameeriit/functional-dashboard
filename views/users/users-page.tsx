@@ -6,8 +6,7 @@ import { UsersTable } from "@/views/users/_components/users-table"
 import { useUsersDirectory } from "@/views/users/_hooks/use-users-directory"
 
 export function UsersPage() {
-  const { users, setUsers, roles, statuses, loading, error } =
-    useUsersDirectory()
+  const { roles, statuses, loading, error } = useUsersDirectory()
 
   if (error) {
     return <UsersPageError message={error} />
@@ -29,12 +28,7 @@ export function UsersPage() {
         </p>
       </div>
 
-      <UsersTable
-        users={users}
-        setUsers={setUsers}
-        roles={roles}
-        statuses={statuses}
-      />
+      <UsersTable roles={roles} statuses={statuses} />
     </div>
   )
 }

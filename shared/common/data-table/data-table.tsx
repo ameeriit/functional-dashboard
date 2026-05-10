@@ -1,5 +1,6 @@
 "use client"
 
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   flexRender,
   getCoreRowModel,
@@ -9,14 +10,18 @@ import {
   useReactTable,
   type Column,
   type ColumnDef,
+  type ColumnFiltersState,
   type FilterFn,
   type Header,
+  type PaginationState,
   type SortingState,
+  type VisibilityState,
 } from "@tanstack/react-table"
 import {
   ArrowDownIcon,
   ArrowUpDownIcon,
   ArrowUpIcon,
+  Columns3,
   Pencil,
   Save,
   Search,
@@ -32,13 +37,29 @@ import {
   type FieldValues,
   type Resolver,
 } from "react-hook-form"
+import type { ZodTypeAny } from "zod/v3"
+
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 
 import { ConfirmDialog } from "@/shared/common/confirm-dialog"
 import { DataTableCellEditor } from "@/shared/common/data-table/cell-editors"
 import "@/shared/common/data-table/types"
+import {
+  readPersistedDataTableState,
+  writePersistedDataTableState,
+} from "@/shared/lib/table-persistence"
 import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu"
 import { Input } from "@/shared/ui/input"
+import { Skeleton } from "@/shared/ui/skeleton"
 import {
   Pagination,
   PaginationContent,
@@ -77,6 +98,13 @@ export type DeleteConfirm<TData> =
       cancelLabel?: string
     }
 
+export type DataTableQuerySnapshot = {
+  pagination: PaginationState
+  sorting: SortingState
+  columnFilters: ColumnFiltersState
+  globalFilter: string
+}
+
 /**
  * Filters, global search, and pagination use local React state.
  * Editable cells use React Hook Form (`useForm` + `Controller` via `DataTableCellEditor`).
@@ -93,6 +121,8 @@ export type DataTableProps<
   onSave?: (row: TData, patch: Partial<TData>) => void | Promise<void>
   onDelete?: (row: TData) => void | Promise<void>
   deleteConfirm?: DeleteConfirm<TData>
+  /** When set without `draftResolver`, the table uses `zodResolver(draftSchema)`. */
+  draftSchema?: ZodTypeAny
   draftResolver?: Resolver<TFormValues>
   getDraftDefaults?: (row: TData) => TFormValues
   customEditors?: Partial<
@@ -113,6 +143,20 @@ export type DataTableProps<
   showColumnFilters?: boolean
   /** Announced as the table caption for assistive tech (visually hidden; pair with a visible heading nearby). */
   tableCaption?: string
+  /** Delay before global filter is applied (server queries, expensive filtering). */
+  debounceGlobalSearchMs?: number
+  manualPagination?: boolean
+  manualSorting?: boolean
+  manualFiltering?: boolean
+  /** Total rows after filtering when using manual pagination (required when `manualPagination` is true). */
+  rowCount?: number
+  /** Persist sorting, filters, pagination, column visibility, and search draft to localStorage. */
+  persistenceKey?: string
+  isLoading?: boolean
+  fetchError?: string | null
+  /** Fires when debounced global filter, pagination, sorting, or column filters change. */
+  onQueryChange?: (snapshot: DataTableQuerySnapshot) => void
+  showColumnVisibility?: boolean
 }
 
 type EditState = {
@@ -229,6 +273,7 @@ export function DataTable<
   onSave,
   onDelete,
   deleteConfirm,
+  draftSchema,
   draftResolver,
   getDraftDefaults,
   customEditors,
@@ -238,17 +283,38 @@ export function DataTable<
   pageSizeOptions = [5, 10, 25],
   showColumnFilters = true,
   tableCaption,
+  debounceGlobalSearchMs = 0,
+  manualPagination = false,
+  manualSorting = false,
+  manualFiltering = false,
+  rowCount: rowCountProp,
+  persistenceKey,
+  isLoading = false,
+  fetchError = null,
+  onQueryChange,
+  showColumnVisibility = true,
 }: DataTableProps<TData, TFormValues>) {
   const editingEnabled = editMode !== "off"
 
-  if (editingEnabled && (!draftResolver || !getDraftDefaults)) {
+  const effectiveResolver =
+    draftResolver ??
+    (draftSchema != null
+      ? (zodResolver(draftSchema as never) as Resolver<TFormValues>)
+      : undefined)
+
+  if (editingEnabled && (!effectiveResolver || !getDraftDefaults)) {
     throw new Error(
-      'DataTable: `draftResolver` and `getDraftDefaults` are required whenever `editMode` is not "off".'
+      'DataTable: provide `draftResolver`, or `draftSchema`, plus `getDraftDefaults`, whenever `editMode` is not "off".'
     )
   }
 
+  const hydrated = React.useMemo(
+    () => (persistenceKey ? readPersistedDataTableState(persistenceKey) : null),
+    [persistenceKey]
+  )
+
   const form = useForm<TFormValues>({
-    resolver: draftResolver,
+    resolver: effectiveResolver,
     mode: "onChange",
     defaultValues: {} as DefaultValues<TFormValues>,
   })
@@ -258,11 +324,84 @@ export function DataTable<
   const [validationError, setValidationError] = React.useState<string | null>(
     null
   )
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [globalFilter, setGlobalFilter] = React.useState("")
+  const [sorting, setSorting] = React.useState<SortingState>(
+    () => hydrated?.sorting ?? []
+  )
+  const [filterInput, setFilterInput] = React.useState(
+    () => hydrated?.globalFilter ?? ""
+  )
+  const tableGlobalFilter = useDebouncedValue(
+    filterInput,
+    debounceGlobalSearchMs > 0 ? debounceGlobalSearchMs : 0
+  )
   const [columnSizing, setColumnSizing] = React.useState<
     Record<string, number>
   >({})
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>(() => hydrated?.columnVisibility ?? {})
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    () => hydrated?.columnFilters ?? []
+  )
+  const [pagination, setPagination] = React.useState<PaginationState>(() => ({
+    pageIndex: hydrated?.pagination?.pageIndex ?? 0,
+    pageSize: hydrated?.pagination?.pageSize ?? initialPageSize,
+  }))
+
+  const onQueryChangeRef = React.useRef(onQueryChange)
+  React.useEffect(() => {
+    onQueryChangeRef.current = onQueryChange
+  }, [onQueryChange])
+
+  React.useEffect(() => {
+    if (!persistenceKey) return
+    writePersistedDataTableState(persistenceKey, {
+      version: 1,
+      sorting,
+      columnFilters,
+      columnVisibility,
+      pagination,
+      globalFilter: filterInput,
+    })
+  }, [
+    persistenceKey,
+    sorting,
+    columnFilters,
+    columnVisibility,
+    pagination,
+    filterInput,
+  ])
+
+  const prevQueryFilterRef = React.useRef({
+    gf: tableGlobalFilter,
+    cf: columnFilters as ColumnFiltersState,
+  })
+  React.useEffect(() => {
+    if (!manualPagination) return
+    const prev = prevQueryFilterRef.current
+    const gfChanged = prev.gf !== tableGlobalFilter
+    const cfChanged = prev.cf !== columnFilters
+    if (gfChanged || cfChanged) {
+      setPagination((p) => ({ ...p, pageIndex: 0 }))
+    }
+    prevQueryFilterRef.current = {
+      gf: tableGlobalFilter,
+      cf: columnFilters,
+    }
+  }, [manualPagination, tableGlobalFilter, columnFilters])
+
+  const committedGlobalFilterRef = React.useRef(tableGlobalFilter)
+  committedGlobalFilterRef.current = tableGlobalFilter
+
+  React.useEffect(() => {
+    const cb = onQueryChangeRef.current
+    if (!cb) return
+    cb({
+      pagination,
+      sorting,
+      columnFilters,
+      globalFilter: tableGlobalFilter,
+    })
+  }, [pagination, sorting, columnFilters, tableGlobalFilter])
 
   const rowEditEnabled = editMode === "row" || editMode === "both"
   const cellEditEnabled = editMode === "cell" || editMode === "both"
@@ -342,12 +481,12 @@ export function DataTable<
   }, [submitSave])
 
   React.useEffect(() => {
-    if (!edit || !getDraftDefaults) return
+    if (!edit || !getDraftDefaults || saving) return
     const row = data.find((r) => getRowId(r) === edit.rowId)
     if (!row) return
     form.reset(getDraftDefaults(row))
     setValidationError(null)
-  }, [data, edit, form, getDraftDefaults, getRowId])
+  }, [data, edit, form, getDraftDefaults, getRowId, saving])
 
   React.useEffect(() => {
     if (!edit) return
@@ -408,6 +547,7 @@ export function DataTable<
         maxSize: 200,
         enableSorting: false,
         enableResizing: false,
+        enableHiding: false,
         enableColumnFilter: false,
         meta: {
           filterVariant: "none",
@@ -515,34 +655,62 @@ export function DataTable<
     saving,
   ])
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+  const resolvedRowCount =
+    manualPagination && rowCountProp !== undefined ? rowCountProp : undefined
+
+  const manualPageCount =
+    manualPagination &&
+    resolvedRowCount !== undefined &&
+    pagination.pageSize > 0
+      ? Math.max(1, Math.ceil(resolvedRowCount / pagination.pageSize))
+      : undefined
+
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table hook surface
   const table = useReactTable({
     data,
     columns: augmentedColumns,
     state: {
       sorting,
-      globalFilter,
+      globalFilter: tableGlobalFilter,
       columnSizing,
+      columnVisibility,
+      columnFilters,
+      pagination,
     },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (updater) => {
+      const base = committedGlobalFilterRef.current
+      const next = typeof updater === "function" ? updater(base) : updater
+      setFilterInput(next)
+    },
     onColumnSizingChange: setColumnSizing,
+    onColumnVisibilityChange: setColumnVisibility,
+    onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     enableSorting: true,
     enableGlobalFilter: true,
     enableColumnFilters: true,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
+    manualPagination,
+    manualSorting,
+    manualFiltering,
+    pageCount: manualPageCount,
+    rowCount: resolvedRowCount,
     defaultColumn: {
       minSize: 84,
       maxSize: 560,
       size: 168,
       enableSorting: true,
       enableResizing: true,
+      enableHiding: true,
     },
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(manualSorting ? {} : { getSortedRowModel: getSortedRowModel() }),
+    ...(manualFiltering ? {} : { getFilteredRowModel: getFilteredRowModel() }),
+    ...(manualPagination
+      ? {}
+      : { getPaginationRowModel: getPaginationRowModel() }),
     globalFilterFn,
     getRowId,
     initialState: {
@@ -701,18 +869,21 @@ export function DataTable<
     return out
   }, [currentPage, pageCount])
 
-  const totalRows = table.getFilteredRowModel().rows.length
-  const pageStart =
+  const totalRows = manualPagination
+    ? (resolvedRowCount ?? 0)
+    : table.getFilteredRowModel().rows.length
+  const pg = table.getState().pagination
+  const pageStart = totalRows === 0 ? 0 : pg.pageIndex * pg.pageSize + 1
+  const pageEnd =
     totalRows === 0
       ? 0
-      : table.getState().pagination.pageIndex *
-          table.getState().pagination.pageSize +
-        1
-  const pageEnd = Math.min(
-    totalRows,
-    (table.getState().pagination.pageIndex + 1) *
-      table.getState().pagination.pageSize
-  )
+      : manualPagination
+        ? Math.min(totalRows, pg.pageIndex * pg.pageSize + data.length)
+        : Math.min(totalRows, (pg.pageIndex + 1) * pg.pageSize)
+
+  const hideableColumns = table
+    .getAllLeafColumns()
+    .filter((c) => c.getCanHide())
 
   /** Matches `CardHeader` inset when this table sits inside `Card` (`group/card`). */
   const cardHeaderInsetX = "px-4 group-data-[size=sm]/card:px-3"
@@ -724,7 +895,12 @@ export function DataTable<
         className
       )}
     >
-      <div className={cn("flex min-w-0 pt-3", cardHeaderInsetX)}>
+      <div
+        className={cn(
+          "flex min-w-0 flex-col gap-3 pt-3 sm:flex-row sm:items-center sm:justify-between",
+          cardHeaderInsetX
+        )}
+      >
         <div className="flex max-w-full min-w-0 flex-1 items-center gap-2 sm:max-w-sm">
           <Search
             className="pointer-events-none size-4 shrink-0 text-muted-foreground"
@@ -738,13 +914,62 @@ export function DataTable<
           </label>
           <Input
             id="dt-global-search"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            value={filterInput}
+            onChange={(e) => setFilterInput(e.target.value)}
             placeholder="Search across columns…"
             className="min-h-9 flex-1 px-0"
+            disabled={isLoading}
           />
         </div>
+        {showColumnVisibility && hideableColumns.length > 0 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0 gap-2"
+                aria-label="Toggle column visibility"
+              >
+                <Columns3 className="size-3.5" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                Visible columns
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {hideableColumns.map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="text-xs capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(v) => column.toggleVisibility(!!v)}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {typeof column.columnDef.header === "string"
+                    ? column.columnDef.header
+                    : column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
       </div>
+
+      {fetchError ? (
+        <p
+          role="alert"
+          className={cn(
+            "text-sm font-medium text-destructive",
+            cardHeaderInsetX
+          )}
+          aria-live="polite"
+        >
+          {fetchError}
+        </p>
+      ) : null}
 
       {validationError ? (
         <p
@@ -760,6 +985,20 @@ export function DataTable<
       ) : null}
 
       <div className="relative isolate max-w-full min-w-0 overflow-x-auto overscroll-x-contain rounded-none border border-border">
+        {isLoading ? (
+          <div
+            className="absolute inset-0 z-20 flex items-start justify-center bg-background/70 px-4 pt-16 backdrop-blur-[1px]"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <div className="sr-only">Loading table data</div>
+            <div className="flex w-full max-w-md flex-col gap-2">
+              <Skeleton className="h-9 w-full" aria-hidden />
+              <Skeleton className="h-9 w-full" aria-hidden />
+              <Skeleton className="h-9 w-3/4" aria-hidden />
+            </div>
+          </div>
+        ) : null}
         <table className="w-full table-fixed caption-bottom text-xs">
           {tableCaption ? (
             <TableCaption className="sr-only">{tableCaption}</TableCaption>

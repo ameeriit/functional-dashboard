@@ -6,12 +6,13 @@ import { DataTable } from "@/shared/common/data-table"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card"
 import {
   getUserDraftDefaults,
-  userDraftResolver,
+  userDraftFormSchema,
   type UserDraftFormValues,
 } from "@/views/users/_components/users-table/api/user-draft"
 import { buildUserColumns } from "@/views/users/_components/users-table/_components/user-table-columns"
 import { useUserDelete } from "@/views/users/_components/users-table/_hooks/use-user-delete"
 import { useUserSave } from "@/views/users/_components/users-table/_hooks/use-user-save"
+import { useUsersRemoteQuery } from "@/views/users/_components/users-table/_hooks/use-users-remote-query"
 import { usersTableDeleteConfirm } from "@/views/users/_components/users-table/entities/delete-confirm"
 import type {
   UserRoleOption,
@@ -20,18 +21,17 @@ import type {
 import type { User } from "@/views/users/entities/types"
 
 export function UsersTable({
-  users,
-  setUsers,
   roles,
   statuses,
 }: {
-  users: User[]
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>
   roles: UserRoleOption[]
   statuses: UserStatusOption[]
 }) {
-  const { handleSave } = useUserSave(setUsers)
-  const { handleDelete } = useUserDelete(setUsers)
+  const { rows, setRows, filteredCount, loading, error, runQuery } =
+    useUsersRemoteQuery()
+
+  const { handleSave } = useUserSave(setRows)
+  const { handleDelete } = useUserDelete(setRows)
 
   const columns = React.useMemo(
     () => buildUserColumns(roles, statuses),
@@ -43,25 +43,34 @@ export function UsersTable({
       <CardHeader>
         <CardTitle className="font-heading text-base">Team members</CardTitle>
         <CardDescription>
-          View mode by default. Use &quot;Edit&quot; to edit a whole row, or
-          click Role or Status (and Name / Email) to edit one field. Save
-          applies changes; Cancel discards drafts — nothing updates until you
-          save.
+          Server-style paging on an in-memory mock API with simulated latency.
+          Search is debounced; filters, sort, pagination, and visible columns
+          persist locally. Use row edit or click cells to change fields; saves
+          apply optimistically and roll back if the request fails.
         </CardDescription>
       </CardHeader>
 
       <div className="min-w-0 border-t">
         <DataTable<User, UserDraftFormValues>
           columns={columns}
-          data={users}
+          data={rows}
           getRowId={(u) => u.id}
           editMode="both"
           onSave={handleSave}
           onDelete={handleDelete}
           deleteConfirm={usersTableDeleteConfirm}
-          draftResolver={userDraftResolver}
+          draftSchema={userDraftFormSchema}
           getDraftDefaults={getUserDraftDefaults}
-          emptyState="No team members yet."
+          manualPagination
+          manualSorting
+          manualFiltering
+          rowCount={filteredCount}
+          persistenceKey="users-directory"
+          debounceGlobalSearchMs={320}
+          onQueryChange={runQuery}
+          isLoading={loading}
+          fetchError={error}
+          emptyState="No team members match the current filters."
           tableCaption="Workspace team members, roles, contact details, and activity"
         />
       </div>

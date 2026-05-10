@@ -3,6 +3,7 @@ import "@/shared/common/data-table/types"
 export { DataTable } from "@/shared/common/data-table/data-table"
 export type {
   DataTableProps,
+  DataTableQuerySnapshot,
   DeleteConfirm,
   EditMode,
 } from "@/shared/common/data-table/data-table"

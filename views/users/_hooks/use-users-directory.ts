@@ -2,19 +2,12 @@
 
 import * as React from "react"
 
-import {
-  getUserRoles,
-  getUsers,
-  getUserStatuses,
-} from "@/views/users/api/users-data"
+import { getUserRoles, getUserStatuses } from "@/views/users/api/users-data"
 import type {
   UserRoleOption,
   UserStatusOption,
 } from "@/views/users/api/users-data"
-import type { User } from "@/views/users/entities/types"
-
 export function useUsersDirectory() {
-  const [users, setUsers] = React.useState<User[]>([])
   const [roles, setRoles] = React.useState<UserRoleOption[]>([])
   const [statuses, setStatuses] = React.useState<UserStatusOption[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -24,12 +17,10 @@ export function useUsersDirectory() {
     setLoading(true)
     setError(null)
     try {
-      const [nextUsers, nextRoles, nextStatuses] = await Promise.all([
-        getUsers(),
+      const [nextRoles, nextStatuses] = await Promise.all([
         getUserRoles(),
         getUserStatuses(),
       ])
-      setUsers(nextUsers)
       setRoles(nextRoles)
       setStatuses(nextStatuses)
     } catch (e) {
@@ -46,5 +37,5 @@ export function useUsersDirectory() {
     return () => cancelAnimationFrame(id)
   }, [load])
 
-  return { users, setUsers, roles, statuses, loading, error, reload: load }
+  return { roles, statuses, loading, error, reload: load }
 }

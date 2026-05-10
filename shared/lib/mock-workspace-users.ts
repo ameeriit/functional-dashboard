@@ -1,3 +1,6 @@
+import type { ColumnFiltersState, SortingState } from "@tanstack/react-table"
+
+import { formatLastActive } from "@/shared/lib/format"
 import type {
   User,
   UserRole,
@@ -426,4 +429,110 @@ export async function deleteUser(id: string): Promise<{ id: string }> {
   if (index === -1) throw new Error(`User ${id} not found`)
   mockUsers.splice(index, 1)
   return { id }
+}
+
+/** Server-style paginated read over the in-memory mock store (simulated latency). */
+export type WorkspaceUsersPageQuery = {
+  pageIndex: number
+  pageSize: number
+  sorting: SortingState
+  globalFilter: string
+  columnFilters: ColumnFiltersState
+}
+
+const COLUMN_EQUALS = new Set([
+  "role",
+  "status",
+  "notificationsEnabled",
+  "marketingOptIn",
+])
+
+function userMatchesColumnFilter(
+  user: User,
+  columnId: string,
+  value: unknown
+): boolean {
+  const fv = value as string | undefined
+  if (fv === undefined || fv === "" || fv === "__all__") return true
+  const raw = user[columnId as keyof User]
+  if (COLUMN_EQUALS.has(columnId)) {
+    return String(raw) === fv
+  }
+  return String(raw ?? "")
+    .toLowerCase()
+    .includes(String(fv).toLowerCase())
+}
+
+function userMatchesGlobal(user: User, q: string): boolean {
+  const needle = q.toLowerCase().trim()
+  if (!needle) return true
+  const hay = [
+    user.name,
+    user.email,
+    user.phone,
+    user.role,
+    user.status,
+    String(user.annualSalary),
+    String(user.bonusPercent),
+    String(user.ptoDays),
+    user.hireDate,
+    String(user.notificationsEnabled),
+    String(user.marketingOptIn),
+    formatLastActive(user.lastActive),
+  ]
+    .join(" ")
+    .toLowerCase()
+  return hay.includes(needle)
+}
+
+function compareUsers(
+  a: User,
+  b: User,
+  columnId: string,
+  desc: boolean
+): number {
+  const av = a[columnId as keyof User]
+  const bv = b[columnId as keyof User]
+  let cmp = 0
+  if (typeof av === "number" && typeof bv === "number") {
+    cmp = av - bv
+  } else if (typeof av === "boolean" && typeof bv === "boolean") {
+    cmp = Number(av) - Number(bv)
+  } else {
+    cmp = String(av ?? "").localeCompare(String(bv ?? ""), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    })
+  }
+  return desc ? -cmp : cmp
+}
+
+export async function fetchWorkspaceUsersPage(
+  query: WorkspaceUsersPageQuery
+): Promise<{ rows: User[]; filteredCount: number }> {
+  await new Promise((r) => setTimeout(r, 280))
+
+  let rows = [...mockUsers]
+  rows = rows.filter((u) => userMatchesGlobal(u, query.globalFilter))
+
+  for (const { id, value } of query.columnFilters) {
+    rows = rows.filter((u) => userMatchesColumnFilter(u, id, value))
+  }
+
+  const sorting =
+    query.sorting.length > 0 ? query.sorting : [{ id: "name", desc: false }]
+
+  rows.sort((a, b) => {
+    for (const s of sorting) {
+      const cmp = compareUsers(a, b, s.id, s.desc)
+      if (cmp !== 0) return cmp
+    }
+    return 0
+  })
+
+  const filteredCount = rows.length
+  const start = query.pageIndex * query.pageSize
+  const slice = rows.slice(start, start + query.pageSize)
+
+  return { rows: slice, filteredCount }
 }
