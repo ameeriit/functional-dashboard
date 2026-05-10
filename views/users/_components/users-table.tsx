@@ -1,24 +1,15 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { Search, UserPlus } from "lucide-react"
 import * as React from "react"
 import { toast } from "sonner"
 
+import { DataTable } from "@/shared/common/data-table"
 import { formatLastActive, getInitials } from "@/shared/lib/format"
 import { cn } from "@/shared/lib/utils"
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar"
 import { Badge } from "@/shared/ui/badge"
-import { Button } from "@/shared/ui/button"
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card"
-import { DataTable } from "@/shared/common/data-table"
-import { Input } from "@/shared/ui/input"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card"
 import {
   deleteUser,
   updateUser,
@@ -153,22 +144,10 @@ export function UsersTable({
   statuses: UserStatusOption[]
 }) {
   const [users, setUsers] = React.useState(initialUsers)
-  const [query, setQuery] = React.useState("")
   const columns = React.useMemo(
     () => buildColumns(roles, statuses),
     [roles, statuses]
   )
-
-  const filtered = React.useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return users
-    return users.filter(
-      (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.role.toLowerCase().includes(q)
-    )
-  }, [users, query])
 
   const handleSave = React.useCallback(
     async (user: User, patch: Partial<User>) => {
@@ -177,9 +156,10 @@ export function UsersTable({
         setUsers((prev) => prev.map((u) => (u.id === user.id ? updated : u)))
         toast.success(`Updated ${updated.name}`, {
           description: describePatch(patch),
+          closeButton: false,
         })
       } catch (error) {
-        toast.error(`Couldn't update ${user.name}`, {
+        toast.warning(`Couldn't update ${user.name}`, {
           description:
             error instanceof Error ? error.message : "Please try again.",
         })
@@ -193,11 +173,11 @@ export function UsersTable({
     try {
       await deleteUser(user.id)
       setUsers((prev) => prev.filter((u) => u.id !== user.id))
-      toast.success(`Removed ${user.name}`, {
+      toast.error(`Removed ${user.name}`, {
         description: `${user.email} no longer has access.`,
       })
     } catch (error) {
-      toast.error(`Couldn't remove ${user.name}`, {
+      toast.warning(`Couldn't remove ${user.name}`, {
         description:
           error instanceof Error ? error.message : "Please try again.",
       })
@@ -215,28 +195,12 @@ export function UsersTable({
           applies changes; Cancel discards drafts — nothing updates until you
           save.
         </CardDescription>
-        <CardAction className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <div className="relative w-full sm:w-64">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, email, or role"
-              className="pl-8"
-              aria-label="Search users"
-            />
-          </div>
-          <Button>
-            <UserPlus />
-            Invite
-          </Button>
-        </CardAction>
       </CardHeader>
 
       <div className="border-t">
         <DataTable
           columns={columns}
-          data={filtered}
+          data={users}
           getRowId={(u) => u.id}
           editMode="both"
           onSave={handleSave}
@@ -248,7 +212,7 @@ export function UsersTable({
             confirmLabel: "Remove",
           }}
           validateDraft={validateUserDraft}
-          emptyState="No users match your search."
+          emptyState="No team members yet."
         />
       </div>
     </Card>

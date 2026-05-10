@@ -35,7 +35,7 @@ Open [http://localhost:3000](http://localhost:3000).
 pnpm dlx shadcn@latest add <component>
 ```
 
-Components added via `shadcn add` land in `shared/ui/` per the aliases in `components.json`. Custom components we author belong in `shared/common/` — see the layer table below.
+Components added via `shadcn add` land in `components/ui/` per the aliases in `components.json`. Custom components we author belong in `components/table/`, `components/dashboard/`, … — see the layer table below.
 
 ## Architecture
 
@@ -56,7 +56,7 @@ providers/              App-wide React providers (theme, ...)
 hooks/                  Generic React hooks
 ```
 
-The `shared/ui/` ↔ `shared/common/` split is by **origin**, not purpose. A file lives in `shared/ui/` if and only if `shadcn add <name>` produced it (the file maps 1:1 with the shadcn registry). Anything we wrote ourselves — even a thin wrapper over a primitive — goes in `shared/common/`.
+The `components/ui/` ↔ `components/table/`, `components/dashboard/`, … split is by **origin**, not purpose. A file lives in `components/ui/` if and only if `shadcn add <name>` produced it (the file maps 1:1 with the shadcn registry). Anything we wrote ourselves — even a thin wrapper over a primitive — goes in `components/table/`, `components/dashboard/`, ….
 
 ### Always use alias imports
 
@@ -66,7 +66,7 @@ Never use relative `./` or `../`. Always use the workspace alias roots:
 | --------------- | ----------------------------------- |
 | `@/app/*`       | `./app/*`                           |
 | `@/views/*`     | `./views/*`                         |
-| `@/shared/*`    | `./shared/*`                        |
+| `@/shared/*`    | `./components/* and ./lib/*`        |
 | `@/providers/*` | `./providers/*`                     |
 | `@/hooks/*`     | `./hooks/*`                         |
 | `@/*`           | fallback for shadcn-generated paths |
@@ -176,7 +176,7 @@ Naming:
 
 ### View-local helpers, hooks, tests
 
-- **Generic helpers** go in `@/shared/lib/`. Helpers tightly coupled to a single fetcher live next to it inside that level's `api/`. There is no per-view `lib/` folder.
+- **Generic helpers** go in `@/lib/`. Helpers tightly coupled to a single fetcher live next to it inside that level's `api/`. There is no per-view `lib/` folder.
 - **View-local hooks** live as siblings, following the same shape: `<thing>/_hooks/use-<thing>.ts`, or — when the hook is private to one component and small — colocated inside the component file. Generic, app-wide hooks live in `@/hooks`.
 - **Tests are colocated**: `<file>.test.ts(x)` next to `<file>`. Removing a feature folder also removes its tests. No top-level `tests/`.
 
@@ -207,9 +207,9 @@ export default async function Page() {
 
 If a route file grows beyond ~10–15 lines, extract whatever is growing into the view.
 
-### `shared/common/` discipline
+### `components/table/`, `components/dashboard/`, … discipline
 
-`shared/common/` holds two kinds of files:
+`components/table/`, `components/dashboard/`, … holds two kinds of files:
 
 1. **Generic compositions** we authored over shadcn primitives or other libraries (`DataTable`, `ConfirmDialog`). These are app-agnostic; nothing in them references a specific view, route, or piece of feature data.
 2. **App-level chrome** that hardcodes app-wide static things — brand, nav literal, header layout (`AppSidebar`, `SiteHeader`).
@@ -261,5 +261,5 @@ Delete the folder. Remove its single import line from the parent (route, page, o
 
 Decide by origin:
 
-- **shadcn primitive** (e.g., `pnpm dlx shadcn@latest add tabs`) → lands in `shared/ui/`. `components.json` is already configured for this; don't change it. Treat the result as vendored — keep edits surgical so a future `shadcn add --overwrite` re-sync stays painless.
-- **Anything else we author** (generic composition, app-level chrome) → put it in `shared/common/<name>.tsx`. Compositions over shadcn primitives belong here, not in `shared/ui/`.
+- **shadcn primitive** (e.g., `pnpm dlx shadcn@latest add tabs`) → lands in `components/ui/`. `components.json` is already configured for this; don't change it. Treat the result as vendored — keep edits surgical so a future `shadcn add --overwrite` re-sync stays painless.
+- **Anything else we author** (generic composition, app-level chrome) → put it in `shared/common/<name>.tsx`. Compositions over shadcn primitives belong here, not in `components/ui/`.
