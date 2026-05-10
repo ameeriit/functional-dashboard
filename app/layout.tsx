@@ -1,8 +1,8 @@
 import { DM_Sans, Geist_Mono, Outfit } from "next/font/google";
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/core/providers/theme-provider";
+import { TooltipProvider } from "@/shared/ui/tooltip";
+import { cn } from "@/shared/lib/utils";
 import "./globals.css";
 
 const dmSansHeading = DM_Sans({subsets:['latin'],variable:'--font-heading'});
