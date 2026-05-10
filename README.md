@@ -37,17 +37,17 @@ pnpm start
 
 ### Scripts
 
-| Command           | What it does                                              |
-| ----------------- | --------------------------------------------------------- |
-| `pnpm dev`        | Dev server with Turbopack                                 |
-| `pnpm build`      | Production build                                          |
-| `pnpm start`      | Serve the production build                                |
-| `pnpm lint`       | ESLint (includes import-boundary rules)                   |
-| `pnpm format`     | Write Prettier formatting                                 |
+| Command             | What it does                                            |
+| ------------------- | ------------------------------------------------------- |
+| `pnpm dev`          | Dev server with Turbopack                               |
+| `pnpm build`        | Production build                                        |
+| `pnpm start`        | Serve the production build                              |
+| `pnpm lint`         | ESLint (includes import-boundary rules)                 |
+| `pnpm format`       | Write Prettier formatting                               |
 | `pnpm format:check` | Check formatting only                                   |
-| `pnpm typecheck`  | TypeScript `--noEmit`                                     |
-| `pnpm ready`      | Format, lint, typecheck, then build (local convenience) |
-| `pnpm ready:ci`   | Same as `ready` but `format:check` instead of write       |
+| `pnpm typecheck`    | TypeScript `--noEmit`                                   |
+| `pnpm ready`        | Format, lint, typecheck, then build (local convenience) |
+| `pnpm ready:ci`     | Same as `ready` but `format:check` instead of write     |
 
 ### Adding shadcn components
 
@@ -55,7 +55,7 @@ pnpm start
 pnpm dlx shadcn@latest add <component>
 ```
 
-New primitives land under the paths configured in `components.json` (mapped via `@/shared/ui/*` in this workspace). Custom compositions belong in `shared/common/` or `views/`, not alongside vendored shadcn files — see [Architecture](#architecture).
+New primitives land under the paths configured in `components.json` (mapped via `@/shared/ui/*` in this workspace). Custom compositions belong in `shared/common/` or `views/`, not alongside vendored shadcn files — see [Architecture reference](#architecture-reference).
 
 ## Dashboard & editable table
 
@@ -73,72 +73,91 @@ If you replace the mock with a real API, keep the same boundaries: implement fet
 
 The reusable table lives under **`shared/common/data-table/`** (`DataTable`, cell editors, types). The **Users** table (`views/users/_components/users-table/`) demonstrates:
 
-| Area | Notes |
-| ---- | ----- |
-| Layout & nav | Responsive shell `shared/layout/app-shell.tsx`, sidebar `shared/common/app-sidebar.tsx`; table route `/users`. |
-| Columns & data | Props-driven `ColumnDef`s; demo: `views/users/_components/users-table/_components/user-table-columns.tsx`. |
-| Editing | View vs edit modes; row and/or cell editing via `editMode` (e.g. `row`, `cell`, `both`). Clear **Save** / **Cancel**; drafts use React Hook Form — originals are not overwritten until save succeeds. |
-| Callbacks | `DataTable` accepts **`onEdit`**, **`onSave`**, **`onDelete`**; Users wires save/delete (see note below for `onEdit`). |
-| Validation | Zod schema `views/users/_components/users-table/api/user-draft.ts`; inline errors in editors (`role="alert"`). |
-| Sorting / filters / search | Column sorting; per-column filters (text/select); global search with **debounce** (`debounceGlobalSearchMs` on `DataTable`). |
-| Pagination | **Server-style** on the mock: `manualPagination` + `manualSorting` + `manualFiltering`, `rowCount`, and `onQueryChange` → `useUsersRemoteQuery` → `fetchWorkspaceUsersPage`. |
-| Column resize | Enabled on the table; resize handles expose ARIA on the separator. |
-| Field types | Built-ins: text, number, select, checkbox, switch, date, phone, currency, percentage — extensible via `customEditors` / `ColumnMeta.renderEditor` (`shared/common/data-table/types.ts`). |
-| Formatting | Parsing/normalization: `shared/lib/parse-field-input.ts`; currency/phone/percentage editors in `shared/common/data-table/cell-editors.tsx`. |
-| Persistence | Table UI state (sort, filters, pagination, column visibility, global filter draft) → **`localStorage`** when `persistenceKey` is set (`shared/lib/table-persistence.ts`). **Not** synced to the URL. |
-| Extras | Column visibility menu (default on); light/dark via `providers/theme-provider.tsx` (`next-themes`); optimistic saves with rollback + Sonner toasts. |
+| Area                       | Notes                                                                                                                                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layout & nav               | Responsive shell `shared/layout/app-shell.tsx`, sidebar `shared/common/app-sidebar.tsx`; table route `/users`.                                                                                        |
+| Columns & data             | Props-driven `ColumnDef`s; demo: `views/users/_components/users-table/_components/user-table-columns.tsx`.                                                                                            |
+| Editing                    | View vs edit modes; row and/or cell editing via `editMode` (e.g. `row`, `cell`, `both`). Clear **Save** / **Cancel**; drafts use React Hook Form — originals are not overwritten until save succeeds. |
+| Callbacks                  | `DataTable` accepts **`onEdit`**, **`onSave`**, **`onDelete`**; Users wires save/delete (see note below for `onEdit`).                                                                                |
+| Validation                 | Zod schema `views/users/_components/users-table/api/user-draft.ts`; inline errors in editors (`role="alert"`).                                                                                        |
+| Sorting / filters / search | Column sorting; per-column filters (text/select); global search with **debounce** (`debounceGlobalSearchMs` on `DataTable`).                                                                          |
+| Pagination                 | **Server-style** on the mock: `manualPagination` + `manualSorting` + `manualFiltering`, `rowCount`, and `onQueryChange` → `useUsersRemoteQuery` → `fetchWorkspaceUsersPage`.                          |
+| Column resize              | Enabled on the table; resize handles expose ARIA on the separator.                                                                                                                                    |
+| Field types                | Built-ins: text, number, select, checkbox, switch, date, phone, currency, percentage — extensible via `customEditors` / `ColumnMeta.renderEditor` (`shared/common/data-table/types.ts`).              |
+| Formatting                 | Parsing/normalization: `shared/lib/parse-field-input.ts`; currency/phone/percentage editors in `shared/common/data-table/cell-editors.tsx`.                                                           |
+| Persistence                | Table UI state (sort, filters, pagination, column visibility, global filter draft) → **`localStorage`** when `persistenceKey` is set (`shared/lib/table-persistence.ts`). **Not** synced to the URL.  |
+| Extras                     | Column visibility menu (default on); light/dark via `providers/theme-provider.tsx` (`next-themes`); optimistic saves with rollback + Sonner toasts.                                                   |
 
 ### Intentionally not used / gaps vs some briefs
 
-| Topic | This repo |
-| ----- | --------- |
-| **React Query / SWR** | Optional elsewhere; here data is loaded with React state + callbacks (`use-users-remote-query.ts`). |
-| **URL query persistence** | Not implemented; only **localStorage** for table state (see above). |
-| **`onEdit` on Users** | The prop exists on `DataTable` for consumers; the Users demo does **not** pass `onEdit` (save/delete illustrate persistence). |
+| Topic                             | This repo                                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **React Query / SWR**             | Optional elsewhere; here data is loaded with React state + callbacks (`use-users-remote-query.ts`).                            |
+| **URL query persistence**         | Not implemented; only **localStorage** for table state (see above).                                                            |
+| **`onEdit` on Users**             | The prop exists on `DataTable` for consumers; the Users demo does **not** pass `onEdit` (save/delete illustrate persistence).  |
 | **Keyboard-first spreadsheet UX** | Focus management and ARIA on controls and live regions are in place; full grid keyboard navigation is not a goal of this demo. |
 
 ### Folder map (brief vs this repo)
 
 Take-home specs often suggest `/components/table` and `/pages/...`. Here the same roles appear as:
 
-| Typical brief | This codebase |
-| ------------- | ------------- |
-| Shared table UI | `shared/common/data-table/` |
+| Typical brief              | This codebase                                                  |
+| -------------------------- | -------------------------------------------------------------- |
+| Shared table UI            | `shared/common/data-table/`                                    |
 | Dashboard layout / sidebar | `shared/layout/app-shell.tsx`, `shared/common/app-sidebar.tsx` |
-| App routes | `app/(dashboard)/...` |
-| Page UI | `views/<feature>/` |
+| App routes                 | `app/(dashboard)/...`                                          |
+| Page UI                    | `views/<feature>/`                                             |
 
-## Architecture decisions
+## Architecture and decisions
 
-High-level choices behind this codebase (detail lives in [Architecture](#architecture) below).
+This repo separates **where routes live** from **how pages are built**. Next.js route files under `app/` stay small: metadata, optional server-side data loading, and a single render of a view component. Everything that reads like “the Users screen”—composition, feature folders, columns, hooks, and mutations—lives under `views/<feature>/`. That keeps pull requests scoped by feature and stops route files from becoming undeletable junk drawers.
 
-- **Routing vs implementation**: `app/` stays thin (metadata, optional server fetch, render a view). All page UI and feature composition live under `views/<feature>/` so routes do not accumulate JSX or domain logic.
-- **Shared vs feature code**: `shared/common/` holds reusable UI such as `DataTable` with **no imports from `views/` or `app/`**. Feature-specific columns, Zod drafts, and mutations stay next to the Users feature. ESLint `no-restricted-paths` enforces the split.
-- **One recursive folder shape**: Features use the same pattern at every depth (`<thing>.tsx`, optional `api/`, `entities/`, `_components/`, nested sub-features). The aim is safe deletion and predictable navigation.
-- **Client boundaries**: Server components by default; `"use client"` only on interactive leaves (table, sidebar, hooks). The editable grid needs the boundary anyway; keeping pages server-ready avoids unnecessary hydration.
-- **Table editing model**: A single React Hook Form instance keyed by the active row keeps validation (Zod) and cancel/reset coherent. TanStack Table owns sorting/filtering/pagination state; optional persistence mirrors that state to `localStorage`, not the URL.
-- **Data for the demo**: An in-memory mock with simulated latency exercises loading/error states and manual pagination without standing up a backend. Swap `views/users/api/` for HTTP while preserving the table API.
+**Shared code** is split by stability and reusability. `shared/ui/` is vendored shadcn output (minimal edits). `shared/lib/` holds generic helpers (formatting, mock workspace helpers). `shared/common/` holds authored compositions (`DataTable`, sidebar chrome) that must remain **free of imports from `views/` or `app/`**, so any screen can use the table without creating circular feature coupling. ESLint `no-restricted-paths` encodes those boundaries so `pnpm lint` fails on violations—details under [Statically enforced invariants](#statically-enforced-invariants).
 
-## Tradeoffs made
+**Inside each feature**, one recursive folder shape repeats (`main file`, optional `api/`, `entities/`, `_components/`, nested sub-features). The goal is the **one-folder-removal rule**: deleting a feature is deleting a folder and one import line. Convention beats bespoke nesting per page.
 
-- **`DataTable` scope**: One component carries sorting, filtering, pagination, resizing, editing, persistence, and loading UI. That speeds up product consistency but increases file size and coupling; splitting the toolbar and pagination into smaller components would shrink the surface area later.
-- **React Hook Form + Zod inside the grid**: Strong validation and accessible errors with minimal boilerplate, but generic typing across arbitrary row shapes is verbose (`FieldValues`, column meta). Hook Form per-cell would be lighter per editor but worse for row-level save/cancel.
-- **Manual “remote” mode**: `manualPagination` / `manualSorting` / `manualFiltering` plus `onQueryChange` matches real backends. It is more wiring than pure client-side TanStack models but avoids double-filtering bugs when the server is authoritative.
-- **localStorage over URL**: Sharable/bookmarkable filter state was traded off for simpler implementation and fewer hydration mismatches; deep-linking table state would need nuance with Next.js and defaults.
-- **No TanStack Query**: Fewer dependencies and a smaller conceptual stack for a mock-only demo; cache invalidation, retries, and deduping would justify Query once a real API exists.
-- **Optimistic updates without a formal patch queue**: Saves apply immediately to local row state and roll back on error — simple UX, but concurrent edits or offline queues are out of scope.
+**Rendering model**: default to React Server Components; `"use client"` only on leaves that need events or browser APIs (the editable grid, mobile sidebar, etc.). Pages remain cheap to render and easier to evolve toward streaming or server data later.
 
-## What we would improve with more time
+**Data for the Users demo**: a single-process **in-memory mock** (`shared/lib/mock-workspace-users.ts`) with **simulated latency**, surfaced through `views/users/api/users-data.ts`. That exercises loading states and manual pagination without a backend; swapping in HTTP belongs behind the same view-local API modules—not inside `shared/common/data-table`.
 
-- **URL-synced table state**: Encode sort, filters, page, and visibility in `searchParams` (with migration from existing `localStorage` keys) for shareable links.
-- **TanStack Query (or similar)** wired to real endpoints: standardized loading/error/retry, cache lifetimes, and mutation hooks replacing ad hoc `useEffect` fetch sequences.
-- **Automated tests**: Component tests for `DataTable` interactions (edit/save/cancel), Zod edge cases for `user-draft`, and contract tests for `fetchWorkspaceUsersPage` query payloads.
-- **Performance**: Virtualized body rows for large datasets; audit resize + horizontal scroll on small viewports.
-- **Accessibility**: Dedicated keyboard model for moving between cells and activating edit mode (beyond labels and live regions).
-- **Storybook or similar** for `DataTable` variants (`editMode`, loading, empty, error) to speed review and regression spotting.
-- **Internationalization**: Locale-aware number/currency/date display and Radix directionality if the product leaves English-only demos.
+For diagrams, alias imports, route-shell examples, and sub-feature vs `_components/` rules, see [Architecture reference](#architecture-reference).
 
-## Architecture
+## Tradeoffs and alternatives
+
+| Area                       | What we chose                                                                           | Alternatives                                                     | Why this tradeoff                                                                                                   |
+| -------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Table responsibilities** | One `DataTable` owning toolbar, pagination, filters, resize, editing, persistence hooks | Split into micro-packages per concern (toolbar-only, shell-only) | Faster consistency across screens; cost is a larger component surface until we carve stable subcomponents           |
+| **Forms in the grid**      | One React Hook Form instance per active row + Zod                                       | Controlled inputs only; or per-cell Hook Form                    | Row-level Save/Cancel and validation stay coherent; typing generic rows is verbose                                  |
+| **Pagination / filters**   | `manual*` TanStack modes + server-shaped queries (`onQueryChange`)                      | Fully client-side dataset                                        | Matches backends where **the server is authoritative**—avoids double-filtering and drift                            |
+| **State persistence**      | `localStorage` via `persistenceKey`                                                     | URL `searchParams`                                               | Simpler and fewer SSR hydration pitfalls; shareable links are a deliberate follow-up                                |
+| **Remote data library**    | `useEffect`/callback-driven fetching for the demo                                       | TanStack Query, SWR, Relay                                       | Fewer deps while mocks suffice; Query earns its weight once real endpoints, retries, and cache normalization appear |
+| **Optimistic UX**          | Update row locally, rollback + toast on failure                                         | Pessimistic-only UI; or full offline patch queue                 | Good demo UX with minimal machinery; conflict resolution and offline are out of scope                               |
+
+Other deliberate gaps (keyboard-heavy spreadsheet UX, URL-synced filters, etc.) are documented under [Intentionally not used](#intentionally-not-used--gaps-vs-some-briefs).
+
+## Extending and modifying
+
+**Replace the mock with a real API** — Keep column defs, drafts, and mutations in `views/users/` (or route handlers). Implement HTTP in `views/users/api/` (or server actions) while preserving the same query payload shape the table already emits in manual mode. Do **not** import feature types into `shared/common/data-table/`.
+
+**Add another dashboard page** — Follow [Adding things § A new page](#a-new-page): create `views/<name>/`, add `app/(dashboard)/<route>/page.tsx` as a thin shell, register nav in `shared/common/app-sidebar.tsx`, and add the folder name to the `views` array in `eslint.config.mjs`.
+
+**Customize cells or editors** — Use `customEditors` / `ColumnMeta.renderEditor` (`shared/common/data-table/types.ts`); parsing helpers live in `shared/lib/parse-field-input.ts` when reusable.
+
+**Roadmap-style improvements** (not implemented here): URL-encoded table state (possibly migrating keys from `localStorage`), TanStack Query around mutations/list queries, component tests for edit/save/cancel paths, Storybook-style isolation for `DataTable` variants, and locale-aware number/date formatting.
+
+## Scalability and performance
+
+**Product scalability** — Feature folders and ESLint boundaries scale to larger teams: new routes do not entangle unrelated views, and cross-view imports are forbidden at lint time. The recursive shape keeps ownership obvious (“everything under `views/invoices/` is Invoices”).
+
+**Runtime performance today** — The Users grid renders **visible rows synchronously**; the demo dataset is small. Pagination is already modeled as **server-shaped** (`manualPagination`, `rowCount`, query callbacks), so wiring to cursor/limit APIs is mostly swapping the fetcher—not rewriting TanStack wiring.
+
+**Limitations at larger row counts** — Without virtualization, very wide tables or thousands of DOM rows will stress layout and interaction latency; `@tanstack/react-virtual` (or similar) over the body rows would be the next lever. Resize + horizontal scroll on narrow viewports should be audited separately.
+
+**Backend coupling** — The mock runs **in-process** (single Node lifetime); horizontal scaling and persistence require a real store and API—those constraints are intentional for the exercise.
+
+**Network and caching** — When APIs arrive, prefer listing endpoints that accept filter/sort/page in one round-trip (matching current query objects). Client caches (TanStack Query) reduce redundant reads and centralize retry/error semantics **without** changing the table contract.
+
+## Architecture reference
 
 The codebase has a two-layer split: **`app/` is routing only**, and **`views/` holds page implementations**. Pages live in `views/`, and route files in `app/` are thin shells that fetch data and render the matching view component.
 
@@ -157,20 +176,20 @@ providers/              App-wide React providers (theme, ...)
 hooks/                  Generic React hooks
 ```
 
-The `components/ui/` ↔ `components/table/`, `components/dashboard/`, … split is by **origin**, not purpose. A file lives in `components/ui/` if and only if `shadcn add <name>` produced it (the file maps 1:1 with the shadcn registry). Anything we wrote ourselves — even a thin wrapper over a primitive — goes in `components/table/`, `components/dashboard/`, ….
+Placement under `shared/` is by **origin**, not by feature name. A file belongs in `shared/ui/` if and only if `pnpm dlx shadcn@latest add <name>` produced it (registry output — treat as vendored). Anything we author ourselves — including thin wrappers over primitives — belongs in `shared/common/` (compositions, `DataTable`, app chrome) or `shared/lib/` (pure helpers), never mixed into `shared/ui/`.
 
 ### Always use alias imports
 
 Never use relative `./` or `../`. Always use the workspace alias roots:
 
-| Alias           | Maps to                             |
-| --------------- | ----------------------------------- |
-| `@/app/*`       | `./app/*`                           |
-| `@/views/*`     | `./views/*`                         |
-| `@/shared/*`    | `./components/* and ./lib/*`        |
-| `@/providers/*` | `./providers/*`                     |
-| `@/hooks/*`     | `./hooks/*`                         |
-| `@/*`           | fallback for shadcn-generated paths |
+| Alias           | Maps to                                |
+| --------------- | -------------------------------------- |
+| `@/app/*`       | `./app/*`                              |
+| `@/views/*`     | `./views/*`                            |
+| `@/shared/*`    | `./shared/*`                           |
+| `@/providers/*` | `./providers/*`                        |
+| `@/hooks/*`     | `./hooks/*`                            |
+| `@/*`           | project root (fallback / legacy paths) |
 
 ```ts
 // BAD
@@ -277,7 +296,7 @@ Naming:
 
 ### View-local helpers, hooks, tests
 
-- **Generic helpers** go in `@/lib/`. Helpers tightly coupled to a single fetcher live next to it inside that level's `api/`. There is no per-view `lib/` folder.
+- **Generic helpers** go in `@/shared/lib/`. Helpers tightly coupled to a single fetcher live next to it inside that level's `api/`. There is no per-view `lib/` folder.
 - **View-local hooks** live as siblings, following the same shape: `<thing>/_hooks/use-<thing>.ts`, or — when the hook is private to one component and small — colocated inside the component file. Generic, app-wide hooks live in `@/hooks`.
 - **Tests are colocated**: `<file>.test.ts(x)` next to `<file>`. Removing a feature folder also removes its tests. No top-level `tests/`.
 
@@ -308,14 +327,14 @@ export default async function Page() {
 
 If a route file grows beyond ~10–15 lines, extract whatever is growing into the view.
 
-### `components/table/`, `components/dashboard/`, … discipline
+### `shared/common/` discipline
 
-`components/table/`, `components/dashboard/`, … holds two kinds of files:
+`shared/common/` holds two kinds of files:
 
-1. **Generic compositions** we authored over shadcn primitives or other libraries (`DataTable`, `ConfirmDialog`). These are app-agnostic; nothing in them references a specific view, route, or piece of feature data.
-2. **App-level chrome** that hardcodes app-wide static things — brand, nav literal, header layout (`AppSidebar`, `SiteHeader`).
+1. **Generic compositions** authored over shadcn primitives or other libraries (`DataTable`, dialogs). These stay app-agnostic: no imports from `views/` or `app/`, no feature-specific column types.
+2. **App-level chrome** that hardcodes static app-wide concerns — brand, nav literals, header layout (`AppSidebar`, `SiteHeader`).
 
-Both share **one rule**: no per-request data and no feature logic. The day a piece needs the current user, dynamic role-based nav, or feature data, it stops being shared — it either becomes a view or accepts data via props from a layout/route. Resist the temptation to use `common/` as a junk drawer for "stuff we'll generalize later".
+Both share **one rule**: no per-request data and no feature logic. The day a piece needs the current user, dynamic role-based nav, or feature data, it stops living here — it becomes part of a view or accepts props from a layout/route. Resist using `shared/common/` as a junk drawer for “stuff we’ll generalize later”.
 
 ### Statically enforced invariants
 
@@ -362,5 +381,5 @@ Delete the folder. Remove its single import line from the parent (route, page, o
 
 Decide by origin:
 
-- **shadcn primitive** (e.g., `pnpm dlx shadcn@latest add tabs`) → lands in `components/ui/`. `components.json` is already configured for this; don't change it. Treat the result as vendored — keep edits surgical so a future `shadcn add --overwrite` re-sync stays painless.
-- **Anything else we author** (generic composition, app-level chrome) → put it in `shared/common/<name>.tsx`. Compositions over shadcn primitives belong here, not in `components/ui/`.
+- **shadcn primitive** (e.g., `pnpm dlx shadcn@latest add tabs`) → lands in `shared/ui/` per `components.json`. Treat the result as vendored — keep edits surgical so a future `shadcn add --overwrite` re-sync stays painless.
+- **Anything else we author** (generic composition, app-level chrome) → `shared/common/` or `shared/lib/` as appropriate. Compositions over shadcn primitives belong outside `shared/ui/`.
