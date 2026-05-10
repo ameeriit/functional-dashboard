@@ -46,7 +46,8 @@ export function UsersTable({
           Server-style paging on an in-memory mock API with simulated latency.
           Search is debounced; filters, sort, pagination, and visible columns
           persist locally. Use row edit or click cells to change fields; saves
-          apply optimistically and roll back if the request fails.
+          apply optimistically and roll back if the request fails. While
+          editing, Escape cancels and ⌘/Ctrl+Enter saves (same as Save).
         </CardDescription>
       </CardHeader>
 

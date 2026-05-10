@@ -183,6 +183,12 @@ function resolveCopy<TData, T>(
   return value
 }
 
+function columnHeaderPlainText<TData>(column: Column<TData, unknown>): string {
+  const h = column.columnDef.header
+  if (typeof h === "string") return h
+  return column.id
+}
+
 function collectLeafColumns<TData>(
   columns: ColumnDef<TData, unknown>[]
 ): ColumnDef<TData, unknown>[] {
@@ -482,11 +488,16 @@ export function DataTable<
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         handleCancel()
+        return
+      }
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        void handleSaveClick()
       }
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [edit, handleCancel])
+  }, [edit, handleCancel, handleSaveClick])
 
   const handleEnterEdit = React.useCallback(
     (rowId: string, original: TData, columnId?: string) => {
@@ -719,6 +730,7 @@ export function DataTable<
       col.getCanSort() && col.columnDef.meta?.enableSorting !== false
 
     const align = col.columnDef.meta?.align ?? "left"
+    const headerLabel = columnHeaderPlainText(col)
 
     if (!canSort) {
       return (
@@ -737,12 +749,19 @@ export function DataTable<
 
     const sortIcon =
       sorted === "desc" ? (
-        <ArrowDownIcon className="size-3.5 opacity-70" />
+        <ArrowDownIcon className="size-3.5 opacity-70" aria-hidden />
       ) : sorted === "asc" ? (
-        <ArrowUpIcon className="size-3.5 opacity-70" />
+        <ArrowUpIcon className="size-3.5 opacity-70" aria-hidden />
       ) : (
-        <ArrowUpDownIcon className="size-3.5 opacity-35" />
+        <ArrowUpDownIcon className="size-3.5 opacity-35" aria-hidden />
       )
+
+    const sortAriaLabel =
+      sorted === false
+        ? `Sort by ${headerLabel}`
+        : sorted === "asc"
+          ? `${headerLabel}, sorted ascending. Activate to change sort order.`
+          : `${headerLabel}, sorted descending. Activate to change sort order.`
 
     return (
       <Button
@@ -757,6 +776,8 @@ export function DataTable<
           "[&_svg]:shrink-0"
         )}
         onClick={col.getToggleSortingHandler()}
+        disabled={saving}
+        aria-label={sortAriaLabel}
       >
         <span
           className={cn(
@@ -993,14 +1014,28 @@ export function DataTable<
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const col = header.column
+                  const sortedState = col.getIsSorted()
+                  const headerCanSort =
+                    col.getCanSort() &&
+                    col.columnDef.meta?.enableSorting !== false
                   const canResize =
-                    header.column.getCanResize() &&
-                    header.column.columnDef.enableResizing !== false
+                    col.getCanResize() && col.columnDef.enableResizing !== false
 
                   return (
                     <TableHead
                       key={header.id}
+                      scope="col"
                       colSpan={header.colSpan}
+                      aria-sort={
+                        headerCanSort
+                          ? sortedState === "asc"
+                            ? "ascending"
+                            : sortedState === "desc"
+                              ? "descending"
+                              : "none"
+                          : undefined
+                      }
                       style={{
                         width: header.getSize(),
                         maxWidth: header.getSize(),
