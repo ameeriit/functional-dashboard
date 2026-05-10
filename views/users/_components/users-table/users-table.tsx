@@ -4,11 +4,15 @@ import * as React from "react"
 
 import { DataTable } from "@/shared/common/data-table"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card"
+import {
+  getUserDraftDefaults,
+  userDraftResolver,
+  type UserDraftFormValues,
+} from "@/views/users/_components/users-table/api/user-draft"
+import { buildUserColumns } from "@/views/users/_components/users-table/_components/user-table-columns"
 import { useUserDelete } from "@/views/users/_components/users-table/_hooks/use-user-delete"
 import { useUserSave } from "@/views/users/_components/users-table/_hooks/use-user-save"
-import { buildUserColumns } from "@/views/users/_components/users-table/user-table-columns"
-import { usersTableDeleteConfirm } from "@/views/users/_components/users-table/user-table-delete-config"
-import { validateUserDraft } from "@/views/users/_components/users-table/user-table-draft"
+import { usersTableDeleteConfirm } from "@/views/users/_components/users-table/entities/delete-confirm"
 import type {
   UserRoleOption,
   UserStatusOption,
@@ -35,7 +39,7 @@ export function UsersTable({
   )
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="font-heading text-base">Team members</CardTitle>
         <CardDescription>
@@ -46,8 +50,8 @@ export function UsersTable({
         </CardDescription>
       </CardHeader>
 
-      <div className="border-t">
-        <DataTable
+      <div className="min-w-0 border-t">
+        <DataTable<User, UserDraftFormValues>
           columns={columns}
           data={users}
           getRowId={(u) => u.id}
@@ -55,7 +59,8 @@ export function UsersTable({
           onSave={handleSave}
           onDelete={handleDelete}
           deleteConfirm={usersTableDeleteConfirm}
-          validateDraft={validateUserDraft}
+          draftResolver={userDraftResolver}
+          getDraftDefaults={getUserDraftDefaults}
           emptyState="No team members yet."
         />
       </div>

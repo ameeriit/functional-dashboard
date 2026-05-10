@@ -2,7 +2,7 @@ import * as React from "react"
 import { toast } from "sonner"
 
 import { updateUser } from "@/views/users/api/users-data"
-import { describePatch } from "@/views/users/_components/users-table/user-table-draft"
+import { describePatch } from "@/views/users/_components/users-table/api/describe-patch"
 import type { User } from "@/views/users/entities/types"
 
 export function useUserSave(
