@@ -1,21 +1,19 @@
-import { cookies } from "next/headers"
+"use client"
+
 import * as React from "react"
 
 import { SiteHeader } from "@/shared/common/site-header"
 import { SidebarInset, SidebarProvider } from "@/shared/ui/sidebar"
 
-export async function AppShell({
+export function AppShell({
   sidebar,
   children,
 }: {
   sidebar: React.ReactNode
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
-  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false"
-
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
+    <SidebarProvider defaultOpen>
       {sidebar}
       <SidebarInset>
         <SiteHeader />

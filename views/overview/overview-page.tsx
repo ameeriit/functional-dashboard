@@ -1,8 +1,10 @@
-import { StatsGrid } from "@/views/overview/_components/stats-grid"
-import { TeamTableCard } from "@/views/overview/_components/team-table-card"
-import type { Stat } from "@/views/overview/entities/types"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 
-export function OverviewPage({ stats }: { stats: Stat[] }) {
+import { Button } from "@/shared/ui/button"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card"
+
+export function OverviewPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -10,14 +12,30 @@ export function OverviewPage({ stats }: { stats: Stat[] }) {
           Dashboard
         </h1>
         <p className="text-sm text-muted-foreground">
-          Snapshot of your workspace team — counts match the mock dataset on the
-          Users page. Open Users to view or edit the live table.
+          Overview for your workspace. Use the sidebar to move between sections.
         </p>
       </div>
 
-      <StatsGrid stats={stats} />
-
-      <TeamTableCard />
+      <Card>
+        <CardHeader className="gap-4">
+          <CardTitle className="font-heading text-base">
+            About this app
+          </CardTitle>
+          <CardDescription className="leading-relaxed text-pretty">
+            This is a small dashboard shell built with Next.js and shared UI
+            components. The{" "}
+            <strong className="font-medium text-foreground">Users</strong>{" "}
+            section holds the team table where you can review members and use
+            row or cell editing when you need to change details.
+          </CardDescription>
+          <Button asChild variant="outline" className="w-fit gap-2">
+            <Link href="/users">
+              Go to Users
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
     </div>
   )
 }
