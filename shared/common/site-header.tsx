@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
 
+import { ThemeToggle } from "@/shared/common/theme-toggle"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,9 +26,9 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur md:px-6">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mx-1 h-4!" />
-      <Breadcrumb>
+      <SidebarTrigger className="-ml-1 shrink-0" />
+      <Separator orientation="vertical" className="mx-1 h-4! shrink-0" />
+      <Breadcrumb className="min-w-0 flex-1">
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
             {segments.length === 0 ? (
@@ -58,6 +59,7 @@ export function SiteHeader() {
           })}
         </BreadcrumbList>
       </Breadcrumb>
+      <ThemeToggle />
     </header>
   )
 }
