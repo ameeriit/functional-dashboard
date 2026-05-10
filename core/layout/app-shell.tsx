@@ -1,15 +1,14 @@
+import * as React from "react"
 import { cookies } from "next/headers"
 
 import { SidebarInset, SidebarProvider } from "@/shared/ui/sidebar"
-import { AppSidebar } from "@/core/layout/app-sidebar"
 import { SiteHeader } from "@/core/layout/site-header"
-import type { NavSection } from "@/core/nav/types"
 
 export async function AppShell({
-  nav,
+  sidebar,
   children,
 }: {
-  nav: NavSection[]
+  sidebar: React.ReactNode
   children: React.ReactNode
 }) {
   const cookieStore = await cookies()
@@ -17,7 +16,7 @@ export async function AppShell({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar nav={nav} />
+      {sidebar}
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">{children}</div>
