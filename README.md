@@ -2,6 +2,11 @@
 
 A Next.js 16 dashboard built with React 19, Tailwind CSS v4, and shadcn/ui (radix-lyra style).
 
+## Links
+
+- **Repository**: [github.com/ameeriit/functional-dashboard](https://github.com/ameeriit/functional-dashboard)
+- **Live demo** (Vercel): [functional-dashboard-ten.vercel.app](https://functional-dashboard-ten.vercel.app/)
+
 ## Stack
 
 - **Framework**: [Next.js](https://nextjs.org/) 16 (App Router, Turbopack)
