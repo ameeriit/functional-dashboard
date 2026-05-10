@@ -885,6 +885,12 @@ export function DataTable<
     .getAllLeafColumns()
     .filter((c) => c.getCanHide())
 
+  const visibleLeafColumns = table.getVisibleLeafColumns()
+  const skeletonRowCount = Math.min(
+    Math.max(1, table.getState().pagination.pageSize),
+    12
+  )
+
   /** Matches `CardHeader` inset when this table sits inside `Card` (`group/card`). */
   const cardHeaderInsetX = "px-4 group-data-[size=sm]/card:px-3"
 
@@ -918,7 +924,6 @@ export function DataTable<
             onChange={(e) => setFilterInput(e.target.value)}
             placeholder="Search across columns…"
             className="min-h-9 flex-1 px-0"
-            disabled={isLoading}
           />
         </div>
         {showColumnVisibility && hideableColumns.length > 0 ? (
@@ -986,20 +991,14 @@ export function DataTable<
 
       <div className="relative isolate max-w-full min-w-0 overflow-x-auto overscroll-x-contain rounded-none border border-border">
         {isLoading ? (
-          <div
-            className="absolute inset-0 z-20 flex items-start justify-center bg-background/70 px-4 pt-16 backdrop-blur-[1px]"
-            aria-busy="true"
-            aria-live="polite"
-          >
-            <div className="sr-only">Loading table data</div>
-            <div className="flex w-full max-w-md flex-col gap-2">
-              <Skeleton className="h-9 w-full" aria-hidden />
-              <Skeleton className="h-9 w-full" aria-hidden />
-              <Skeleton className="h-9 w-3/4" aria-hidden />
-            </div>
-          </div>
+          <span className="sr-only" aria-live="polite">
+            Loading table rows.
+          </span>
         ) : null}
-        <table className="w-full table-fixed caption-bottom text-xs">
+        <table
+          className="w-full table-fixed caption-bottom text-xs"
+          aria-busy={isLoading}
+        >
           {tableCaption ? (
             <TableCaption className="sr-only">{tableCaption}</TableCaption>
           ) : null}
@@ -1058,7 +1057,32 @@ export function DataTable<
           </TableHeader>
 
           <TableBody>
-            {table.getRowModel().rows.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: skeletonRowCount }, (_, skIdx) => (
+                <TableRow key={`dt-skeleton-${skIdx}`}>
+                  {visibleLeafColumns.map((col, colIdx) => {
+                    const align = col.columnDef.meta?.align ?? "left"
+                    const widthFrac =
+                      colIdx % 4 === 0 ? "w-[92%]" : colIdx % 4 === 1 ? "w-[72%]" : colIdx % 4 === 2 ? "w-[88%]" : "w-[64%]"
+                    return (
+                      <TableCell
+                        key={`dt-skeleton-${skIdx}-${col.id}`}
+                        style={{ width: col.getSize() }}
+                        className={cn(
+                          align === "right" && "text-right",
+                          align === "center" && "text-center"
+                        )}
+                      >
+                        <Skeleton
+                          className={cn("inline-block h-7 max-w-full", widthFrac)}
+                          aria-hidden
+                        />
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={augmentedColumns.length}
@@ -1198,6 +1222,7 @@ export function DataTable<
             <Select
               value={String(table.getState().pagination.pageSize)}
               onValueChange={(v) => table.setPageSize(Number(v))}
+              disabled={isLoading}
             >
               <SelectTrigger size="sm" className="h-8 w-18">
                 <SelectValue />
@@ -1216,7 +1241,11 @@ export function DataTable<
               <PaginationItem>
                 <PaginationPrevious
                   type="button"
-                  disabled={totalRows === 0 || !table.getCanPreviousPage()}
+                  disabled={
+                    isLoading ||
+                    totalRows === 0 ||
+                    !table.getCanPreviousPage()
+                  }
                   onClick={() => table.previousPage()}
                 />
               </PaginationItem>
@@ -1230,6 +1259,7 @@ export function DataTable<
                     <PaginationLink
                       type="button"
                       isActive={item.n === currentPage}
+                      disabled={isLoading}
                       onClick={() => table.setPageIndex(item.n - 1)}
                     >
                       {item.n}
@@ -1240,7 +1270,9 @@ export function DataTable<
               <PaginationItem>
                 <PaginationNext
                   type="button"
-                  disabled={totalRows === 0 || !table.getCanNextPage()}
+                  disabled={
+                    isLoading || totalRows === 0 || !table.getCanNextPage()
+                  }
                   onClick={() => table.nextPage()}
                 />
               </PaginationItem>
