@@ -1,8 +1,27 @@
 "use client"
 
-import * as React from "react"
 import { MoreHorizontal, Search, UserPlus } from "lucide-react"
+import * as React from "react"
 
+import { cn } from "@/shared/lib/utils"
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar"
+import { Badge } from "@/shared/ui/badge"
+import { Button } from "@/shared/ui/button"
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/shared/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu"
+import { Input } from "@/shared/ui/input"
 import {
   Table,
   TableBody,
@@ -11,33 +30,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/ui/table"
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card"
-import { Badge } from "@/shared/ui/badge"
-import { Button } from "@/shared/ui/button"
-import { Input } from "@/shared/ui/input"
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu"
-import { cn } from "@/shared/lib/utils"
 
-import type { User, UserStatus } from "../model/types"
-import { formatLastActive, getInitials } from "../lib/format"
+import { formatLastActive, getInitials } from "@/shared/lib/format"
+import type { User, UserStatus } from "@/views/users/entities/types"
 
 const statusStyles: Record<UserStatus, string> = {
   active:
     "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  invited: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  invited:
+    "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   suspended: "border-destructive/30 bg-destructive/10 text-destructive",
 }
 
@@ -71,7 +72,7 @@ export function UsersTable({ users }: { users: User[] }) {
         </CardDescription>
         <CardAction className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <div className="relative w-full sm:w-64">
-            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -107,7 +108,7 @@ export function UsersTable({ users }: { users: User[] }) {
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="text-muted-foreground h-24 text-center"
+                  className="h-24 text-center text-muted-foreground"
                 >
                   No users match your search.
                 </TableCell>
@@ -118,13 +119,13 @@ export function UsersTable({ users }: { users: User[] }) {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="size-8">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        <AvatarFallback className="bg-primary/10 text-xs text-primary">
                           {getInitials(user.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
                         <span className="font-medium">{user.name}</span>
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-xs text-muted-foreground">
                           {user.email}
                         </span>
                       </div>
@@ -141,7 +142,7 @@ export function UsersTable({ users }: { users: User[] }) {
                       {statusLabel[user.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground hidden lg:table-cell">
+                  <TableCell className="hidden text-muted-foreground lg:table-cell">
                     {formatLastActive(user.lastActive)}
                   </TableCell>
                   <TableCell className="text-right">

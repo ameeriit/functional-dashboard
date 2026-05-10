@@ -18,6 +18,10 @@
 # production
 /build
 
+# Hidden directories — ignored to prevent accidental commits of editor / IDE /
+# allowlisted hidden folders we deliberately commit.
+.*/
+
 # misc
 .DS_Store
 *.pem

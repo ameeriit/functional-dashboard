@@ -9,9 +9,9 @@ export function WelcomeCard() {
         </CardTitle>
         <CardDescription>
           Use the sidebar to jump between sections. Try{" "}
-          <kbd className="bg-muted rounded px-1.5 py-0.5 text-xs">⌘ B</kbd> to
+          <kbd className="rounded bg-muted px-1.5 py-0.5 text-xs">⌘ B</kbd> to
           toggle the sidebar, or{" "}
-          <kbd className="bg-muted rounded px-1.5 py-0.5 text-xs">D</kbd> to
+          <kbd className="rounded bg-muted px-1.5 py-0.5 text-xs">D</kbd> to
           toggle dark mode.
         </CardDescription>
       </CardHeader>

@@ -1,6 +1,6 @@
 import { Activity, DollarSign, ShoppingCart, Users } from "lucide-react"
 
-import type { Stat } from "../model/types"
+import type { Stat } from "@/views/overview/entities/types"
 
 const mockStats: Stat[] = [
   {

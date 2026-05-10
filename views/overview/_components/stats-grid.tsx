@@ -1,5 +1,5 @@
-import type { Stat } from "../model/types"
-import { StatCard } from "./stat-card"
+import { StatCard } from "@/views/overview/_components/stat-card"
+import type { Stat } from "@/views/overview/entities/types"
 
 export function StatsGrid({ stats }: { stats: Stat[] }) {
   return (

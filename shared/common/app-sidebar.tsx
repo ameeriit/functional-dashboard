@@ -3,7 +3,14 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, ChevronsUpDown, LogOut, User } from "lucide-react"
+import {
+  Activity,
+  ChevronsUpDown,
+  LayoutDashboard,
+  LogOut,
+  User,
+  Users,
+} from "lucide-react"
 
 import {
   Sidebar,
@@ -27,18 +34,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu"
-import type { NavSection } from "@/core/nav/types"
+const nav = [
+  {
+    label: "Overview",
+    items: [{ title: "Dashboard", href: "/", icon: LayoutDashboard }],
+  },
+  {
+    label: "Workspace",
+    items: [{ title: "Users", href: "/users", icon: Users }],
+  },
+]
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/"
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
-  nav: NavSection[]
-}
-
-export function AppSidebar({ nav, ...props }: AppSidebarProps) {
+export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
 
   return (
@@ -59,7 +71,7 @@ export function AppSidebar({ nav, ...props }: AppSidebarProps) {
                   <span className="font-heading text-sm font-semibold">
                     Workspace
                   </span>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-xs text-muted-foreground">
                     Dashboard
                   </span>
                 </div>
@@ -114,7 +126,7 @@ export function AppSidebar({ nav, ...props }: AppSidebarProps) {
                   </Avatar>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="text-sm font-medium">Jane Doe</span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-xs text-muted-foreground">
                       jane.doe@example.com
                     </span>
                   </div>

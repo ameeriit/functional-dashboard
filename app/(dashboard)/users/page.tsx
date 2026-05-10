@@ -1,10 +1,11 @@
-import { getUsers, UsersPageSection } from "@/features/users"
+import { UsersPage } from "@/views/users/users-page"
+import { getUsers } from "@/views/users/api/users-data"
 
 export const metadata = {
   title: "Users",
 }
 
-export default async function UsersPage() {
+export default async function Page() {
   const users = await getUsers()
-  return <UsersPageSection users={users} />
+  return <UsersPage users={users} />
 }

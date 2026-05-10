@@ -1,11 +1,10 @@
-import { AppShell } from "@/core/layout/app-shell"
-
-import { DashboardSidebar } from "./dashboard-sidebar"
+import { AppShell } from "@/shared/layout/app-shell"
+import { AppSidebar } from "@/shared/common/app-sidebar"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return <AppShell sidebar={<DashboardSidebar />}>{children}</AppShell>
+  return <AppShell sidebar={<AppSidebar />}>{children}</AppShell>
 }

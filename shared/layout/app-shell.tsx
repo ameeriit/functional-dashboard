@@ -1,8 +1,8 @@
-import * as React from "react"
 import { cookies } from "next/headers"
+import * as React from "react"
 
+import { SiteHeader } from "@/shared/common/site-header"
 import { SidebarInset, SidebarProvider } from "@/shared/ui/sidebar"
-import { SiteHeader } from "@/core/layout/site-header"
 
 export async function AppShell({
   sidebar,

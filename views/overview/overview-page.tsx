@@ -1,6 +1,6 @@
-import type { Stat } from "../model/types"
-import { StatsGrid } from "./stats-grid"
-import { WelcomeCard } from "./welcome-card"
+import { StatsGrid } from "@/views/overview/_components/stats-grid"
+import { WelcomeCard } from "@/views/overview/_components/welcome-card"
+import type { Stat } from "@/views/overview/entities/types"
 
 export function OverviewPage({ stats }: { stats: Stat[] }) {
   return (
@@ -9,7 +9,7 @@ export function OverviewPage({ stats }: { stats: Stat[] }) {
         <h1 className="font-heading text-2xl font-semibold tracking-tight">
           Dashboard
         </h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           A quick overview of what&apos;s happening across your workspace.
         </p>
       </div>

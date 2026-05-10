@@ -1,8 +1,8 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import * as React from "react"
 
 import {
   Breadcrumb,
@@ -16,9 +16,7 @@ import { Separator } from "@/shared/ui/separator"
 import { SidebarTrigger } from "@/shared/ui/sidebar"
 
 function humanize(segment: string) {
-  return segment
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return segment.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export function SiteHeader() {
@@ -26,7 +24,7 @@ export function SiteHeader() {
   const segments = pathname.split("/").filter(Boolean)
 
   return (
-    <header className="bg-background/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur md:px-6">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur md:px-6">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mx-1 h-4!" />
       <Breadcrumb>

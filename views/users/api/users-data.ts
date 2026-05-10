@@ -1,6 +1,6 @@
-import type { User } from "../model/types"
+import type { User } from "@/views/users/entities/types"
 
-export const mockUsers: User[] = [
+const mockUsers: User[] = [
   {
     id: "u_01",
     name: "Olivia Bennett",
@@ -66,3 +66,7 @@ export const mockUsers: User[] = [
     lastActive: "2026-05-06T13:10:00Z",
   },
 ]
+
+export async function getUsers(): Promise<User[]> {
+  return mockUsers
+}
