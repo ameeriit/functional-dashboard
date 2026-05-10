@@ -1,9 +1,6 @@
 import { filterFns, sortingFns, type ColumnDef } from "@tanstack/react-table"
 
-import {
-  booleanStringEqualsFilter,
-  isoDateTimeIncludesFilter,
-} from "@/shared/common/data-table"
+import { booleanStringEqualsFilter } from "@/shared/common/data-table"
 import {
   formatIsoDate,
   formatLastActive,
@@ -254,10 +251,9 @@ export function buildUserColumns(
       accessorKey: "lastActive",
       header: "Last active",
       size: 156,
-      enableSorting: false,
-      filterFn: isoDateTimeIncludesFilter,
+      enableColumnFilter: false,
       meta: {
-        filterVariant: "text",
+        filterVariant: "none",
         /** Lets global search match the same locale string users see in the cell. */
         globalFilterText: (v) => formatLastActive(String(v ?? "")),
       },

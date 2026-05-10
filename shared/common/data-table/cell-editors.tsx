@@ -45,7 +45,7 @@ function FieldError({ message }: { message?: string }) {
   return (
     <p
       role="alert"
-      className="mt-0.5 max-w-[14rem] text-[11px] leading-tight break-words text-destructive"
+      className="mt-0.5 max-w-56 text-[11px] leading-tight wrap-break-word text-destructive"
     >
       {message}
     </p>
@@ -62,7 +62,7 @@ function FieldHint({
   return (
     <p
       id={id}
-      className="mt-0.5 max-w-[14rem] text-[11px] leading-snug text-muted-foreground"
+      className="mt-0.5 max-w-56 text-[11px] leading-snug text-muted-foreground"
     >
       {children}
     </p>
@@ -89,7 +89,7 @@ function CurrencyEditableInput<T extends FieldValues>({
   }, [field.value])
 
   return (
-    <div className="relative min-w-[7rem] space-y-0.5">
+    <div className="relative min-w-28 space-y-0.5">
       <span className="pointer-events-none absolute top-1/2 left-0 z-10 -translate-y-1/2 text-xs text-muted-foreground tabular-nums select-none">
         $
       </span>
@@ -156,7 +156,7 @@ function PercentageEditableInput<T extends FieldValues>({
   }, [field.value])
 
   return (
-    <div className="relative min-w-[5rem] space-y-0.5">
+    <div className="relative min-w-20 space-y-0.5">
       <Input
         type="text"
         inputMode="decimal"
@@ -221,7 +221,7 @@ function PhoneEditableInput<T extends FieldValues>({
   }, [field.value])
 
   return (
-    <div className="min-w-[10rem] space-y-0.5">
+    <div className="min-w-40 space-y-0.5">
       <Input
         type="tel"
         autoComplete="tel"
@@ -272,7 +272,7 @@ function BuiltinSelectEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-[8rem] space-y-0.5">
+        <div className="min-w-32 space-y-0.5">
           <Select
             value={String(field.value ?? "")}
             onValueChange={field.onChange}
@@ -354,7 +354,7 @@ function BuiltinDateEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-[9rem] space-y-0.5">
+        <div className="min-w-36 space-y-0.5">
           <Input
             {...field}
             value={String(field.value ?? "")}
@@ -441,7 +441,7 @@ function BuiltinNumberEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-[5rem] space-y-0.5">
+        <div className="min-w-20 space-y-0.5">
           <Input
             type="number"
             inputMode="decimal"
@@ -477,7 +477,7 @@ function BuiltinTextEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-[6rem] space-y-0.5">
+        <div className="min-w-24 space-y-0.5">
           <Input
             {...field}
             value={String(field.value ?? "")}

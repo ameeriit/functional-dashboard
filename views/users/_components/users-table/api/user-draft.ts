@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { Resolver } from "react-hook-form"
-import { z } from "zod"
+import { z } from "zod/v3"
 
 import {
   normalizePhoneE164,
@@ -29,7 +29,7 @@ const salarySchema = z.preprocess(
     return Number.isNaN(n) ? v : n
   },
   z
-    .number({ invalid_type_error: "Enter a valid amount." })
+    .number({ message: "Enter a valid amount." })
     .min(0, "Amount must be zero or greater.")
     .max(999_999_999, "Amount is too large.")
 )
@@ -40,7 +40,7 @@ const bonusSchema = z.preprocess(
     return Number.isNaN(n) ? v : n
   },
   z
-    .number({ invalid_type_error: "Enter a valid percentage." })
+    .number({ message: "Enter a valid percentage." })
     .min(0, "Percentage must be at least 0.")
     .max(100, "Percentage cannot exceed 100.")
 )
@@ -62,7 +62,7 @@ export const userDraftFormSchema = z.object({
   bonusPercent: bonusSchema,
   ptoDays: z.coerce
     .number({
-      invalid_type_error: "Enter a valid number of days.",
+      message: "Enter a valid number of days.",
     })
     .int("Use whole days.")
     .min(0, "PTO days cannot be negative.")
