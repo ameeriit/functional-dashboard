@@ -1,11 +1,4 @@
-import { LucideIcon } from "lucide-react"
-
-export type StatTrend = "up" | "down"
-
-export type Stat = {
-  label: string
-  value: string
-  delta: string
-  trend: StatTrend
-  icon: LucideIcon
-}
+export type {
+  StatTrend,
+  WorkspaceSummaryStat as Stat,
+} from "@/shared/lib/workspace-user-stats"
