@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, LayoutDashboard, Users } from "lucide-react"
+import { Activity, LayoutDashboard, Users, X } from "lucide-react"
 
 import {
   Sidebar,
@@ -16,7 +16,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/shared/ui/sidebar"
+import { Button } from "@/shared/ui/button"
 const nav = [
   {
     label: "Overview",
@@ -35,6 +37,13 @@ function isActive(pathname: string, href: string) {
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const closeMobileSidebar = React.useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }, [isMobile, setOpenMobile])
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -42,7 +51,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
-              <Link href="/">
+              <Link href="/" onClick={closeMobileSidebar}>
                 <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <Activity className="size-4" />
                 </div>
@@ -56,6 +65,16 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 </div>
               </Link>
             </SidebarMenuButton>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="absolute top-1.5 right-1.5 md:hidden"
+              onClick={() => setOpenMobile(false)}
+              aria-label="Close navigation"
+            >
+              <X />
+            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -75,7 +94,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                         isActive={isActive(pathname, item.href)}
                         tooltip={item.title}
                       >
-                        <Link href={item.href}>
+                        <Link href={item.href} onClick={closeMobileSidebar}>
                           <Icon />
                           <span className="group-data-[collapsible=icon]:hidden">
                             {item.title}
