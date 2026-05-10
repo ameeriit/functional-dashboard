@@ -142,6 +142,7 @@ export function buildUserColumns(
       sortingFn: sortingFns.basic,
       filterFn: filterFns.includesString,
       meta: {
+        align: "right",
         editable: true,
         inputType: "currency",
         filterVariant: "text",
@@ -159,6 +160,7 @@ export function buildUserColumns(
       sortingFn: sortingFns.basic,
       filterFn: filterFns.includesString,
       meta: {
+        align: "right",
         editable: true,
         inputType: "percentage",
         filterVariant: "text",
@@ -176,6 +178,7 @@ export function buildUserColumns(
       sortingFn: sortingFns.basic,
       filterFn: filterFns.includesString,
       meta: {
+        align: "right",
         editable: true,
         inputType: "number",
         filterVariant: "text",
@@ -206,6 +209,7 @@ export function buildUserColumns(
       size: 88,
       filterFn: booleanStringEqualsFilter,
       meta: {
+        align: "center",
         editable: true,
         inputType: "switch",
         filterVariant: "select",
@@ -232,6 +236,7 @@ export function buildUserColumns(
       size: 104,
       filterFn: booleanStringEqualsFilter,
       meta: {
+        align: "center",
         editable: true,
         inputType: "checkbox",
         filterVariant: "select",

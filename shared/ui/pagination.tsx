@@ -47,7 +47,7 @@ type PaginationLinkProps = {
 function PaginationLink({
   className,
   isActive,
-  size = "icon-sm",
+  size = "sm",
   ...props
 }: PaginationLinkProps) {
   return (
@@ -55,9 +55,15 @@ function PaginationLink({
       aria-current={isActive ? "page" : undefined}
       data-slot="pagination-link"
       data-active={isActive}
-      variant={isActive ? "outline" : "ghost"}
+      variant="outline"
       size={size}
-      className={cn(className)}
+      className={cn(
+        "min-w-8 shrink-0 px-2 tabular-nums shadow-none",
+        isActive
+          ? "border-primary/50 bg-muted/40 font-medium text-foreground"
+          : "border-border/70 bg-transparent font-normal text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+        className
+      )}
       {...props}
     />
   )

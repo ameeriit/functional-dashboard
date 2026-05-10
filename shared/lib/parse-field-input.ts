@@ -1,6 +1,17 @@
+/** Devanagari digits (Nepali / Hindi numerals, Unicode U+0966–U+096F) → ASCII 0–9 */
+export function normalizeNepaliDigitsToAscii(input: string): string {
+  const digits = "०१२३४५६७८९"
+  let out = ""
+  for (const ch of input) {
+    const i = digits.indexOf(ch)
+    out += i >= 0 ? String(i) : ch
+  }
+  return out
+}
+
 /** Normalize free-form phone input toward E.164 (best-effort; assumes NANP when 10 digits). */
 export function normalizePhoneE164(input: string): string {
-  const raw = String(input ?? "").trim()
+  const raw = normalizeNepaliDigitsToAscii(String(input ?? "").trim())
   if (!raw) return ""
   const hasPlus = raw.startsWith("+")
   const digits = raw.replace(/\D/g, "")
@@ -16,7 +27,10 @@ export function parseCurrencyInput(input: unknown): number {
   if (typeof input === "number") {
     return Number.isFinite(input) ? input : Number.NaN
   }
-  const raw = String(input ?? "").replace(/[$,\s]/g, "")
+  const raw = normalizeNepaliDigitsToAscii(String(input ?? "")).replace(
+    /[$,\s]/g,
+    ""
+  )
   if (raw === "" || raw === "-" || raw === ".") return Number.NaN
   const n = Number.parseFloat(raw)
   return Number.isFinite(n) ? n : Number.NaN
@@ -27,7 +41,7 @@ export function parsePercentageInput(input: unknown): number {
   if (typeof input === "number") {
     return Number.isFinite(input) ? input : Number.NaN
   }
-  const raw = String(input ?? "")
+  const raw = normalizeNepaliDigitsToAscii(String(input ?? ""))
     .replace(/%/g, "")
     .trim()
   if (raw === "" || raw === "-" || raw === ".") return Number.NaN

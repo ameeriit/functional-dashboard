@@ -24,6 +24,7 @@ import type {
 import {
   formatCurrencyDraft,
   formatPercentageDraft,
+  normalizeNepaliDigitsToAscii,
   normalizePhoneE164,
   parseCurrencyInput,
   parsePercentageInput,
@@ -45,7 +46,7 @@ function FieldError({ message }: { message?: string }) {
   return (
     <p
       role="alert"
-      className="mt-0.5 max-w-56 text-[11px] leading-tight wrap-break-word text-destructive"
+      className="w-full max-w-full min-w-0 text-[11px] leading-snug wrap-break-word hyphens-auto text-destructive"
     >
       {message}
     </p>
@@ -62,10 +63,32 @@ function FieldHint({
   return (
     <p
       id={id}
-      className="mt-0.5 max-w-56 text-[11px] leading-snug text-muted-foreground"
+      className="w-full max-w-full min-w-0 text-[11px] leading-snug wrap-break-word hyphens-auto text-muted-foreground"
     >
       {children}
     </p>
+  )
+}
+
+/** Constrains editors + helper/error copy to the cell width; text-align matches column meta. */
+function CellEditorShell({
+  align = "left",
+  children,
+}: {
+  align?: "left" | "right" | "center"
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className={cn(
+        "w-full max-w-full min-w-0 space-y-1",
+        align === "right" && "text-right [&_input]:text-right",
+        align === "center" && "text-center [&_input]:text-center",
+        align === "left" && "text-left"
+      )}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -89,49 +112,53 @@ function CurrencyEditableInput<T extends FieldValues>({
   }, [field.value])
 
   return (
-    <div className="relative min-w-28 space-y-0.5">
-      <span className="pointer-events-none absolute top-1/2 left-0 z-10 -translate-y-1/2 text-xs text-muted-foreground tabular-nums select-none">
-        $
-      </span>
-      <Input
-        type="text"
-        inputMode="decimal"
-        autoComplete="off"
-        autoFocus={autoFocus}
-        aria-invalid={fieldState.invalid || undefined}
-        aria-describedby={hintId}
-        className="h-8 pl-4 tabular-nums"
-        value={text}
-        onFocus={() => {
-          focusedRef.current = true
-        }}
-        onBlur={() => {
-          focusedRef.current = false
-          let n = parseCurrencyInput(text)
-          if (Number.isNaN(n)) {
-            n =
-              typeof field.value === "number" && Number.isFinite(field.value)
-                ? field.value
-                : 0
-          }
-          n = Math.max(0, n)
-          field.onChange(n)
-          setText(formatCurrencyDraft(n))
-          field.onBlur()
-        }}
-        onChange={(e) => {
-          const raw = e.target.value
-          setText(raw)
-          const n = parseCurrencyInput(raw)
-          if (!Number.isNaN(n)) {
+    <div className="w-full min-w-0 space-y-1">
+      <div className="relative w-full min-w-0">
+        <span className="pointer-events-none absolute top-1/2 left-2 z-10 -translate-y-1/2 text-xs text-muted-foreground tabular-nums select-none">
+          $
+        </span>
+        <Input
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          autoFocus={autoFocus}
+          aria-invalid={fieldState.invalid || undefined}
+          aria-describedby={hintId}
+          className="h-8 w-full min-w-0 pl-6 tabular-nums"
+          value={text}
+          onFocus={() => {
+            focusedRef.current = true
+          }}
+          onBlur={() => {
+            focusedRef.current = false
+            let n = parseCurrencyInput(text)
+            if (Number.isNaN(n)) {
+              n =
+                typeof field.value === "number" && Number.isFinite(field.value)
+                  ? field.value
+                  : 0
+            }
+            n = Math.max(0, n)
             field.onChange(n)
-          }
-        }}
-      />
-      <FieldHint id={hintId}>
-        Optional $ or commas; saves as a whole number.
-      </FieldHint>
-      <FieldError message={fieldState.error?.message} />
+            setText(formatCurrencyDraft(n))
+            field.onBlur()
+          }}
+          onChange={(e) => {
+            const raw = e.target.value
+            setText(raw)
+            const n = parseCurrencyInput(raw)
+            if (!Number.isNaN(n)) {
+              field.onChange(n)
+            }
+          }}
+        />
+      </div>
+      <div className="space-y-0.5">
+        <FieldHint id={hintId}>
+          Optional $ or commas; saves as a whole number.
+        </FieldHint>
+        <FieldError message={fieldState.error?.message} />
+      </div>
     </div>
   )
 }
@@ -156,47 +183,51 @@ function PercentageEditableInput<T extends FieldValues>({
   }, [field.value])
 
   return (
-    <div className="relative min-w-20 space-y-0.5">
-      <Input
-        type="text"
-        inputMode="decimal"
-        autoComplete="off"
-        autoFocus={autoFocus}
-        aria-invalid={fieldState.invalid || undefined}
-        aria-describedby={hintId}
-        className="h-8 pr-6 tabular-nums"
-        value={text}
-        onFocus={() => {
-          focusedRef.current = true
-        }}
-        onBlur={() => {
-          focusedRef.current = false
-          let n = parsePercentageInput(text)
-          if (Number.isNaN(n)) {
-            n =
-              typeof field.value === "number" && Number.isFinite(field.value)
-                ? field.value
-                : 0
-          }
-          n = Math.min(100, Math.max(0, n))
-          field.onChange(n)
-          setText(formatPercentageDraft(n))
-          field.onBlur()
-        }}
-        onChange={(e) => {
-          const raw = e.target.value
-          setText(raw)
-          const n = parsePercentageInput(raw)
-          if (!Number.isNaN(n)) {
+    <div className="w-full min-w-0 space-y-1">
+      <div className="relative w-full min-w-0">
+        <Input
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          autoFocus={autoFocus}
+          aria-invalid={fieldState.invalid || undefined}
+          aria-describedby={hintId}
+          className="h-8 w-full min-w-0 pr-7 tabular-nums"
+          value={text}
+          onFocus={() => {
+            focusedRef.current = true
+          }}
+          onBlur={() => {
+            focusedRef.current = false
+            let n = parsePercentageInput(text)
+            if (Number.isNaN(n)) {
+              n =
+                typeof field.value === "number" && Number.isFinite(field.value)
+                  ? field.value
+                  : 0
+            }
+            n = Math.min(100, Math.max(0, n))
             field.onChange(n)
-          }
-        }}
-      />
-      <span className="pointer-events-none absolute top-1/2 right-1 z-10 -translate-y-1/2 text-xs text-muted-foreground select-none">
-        %
-      </span>
-      <FieldHint id={hintId}>0–100; % is optional.</FieldHint>
-      <FieldError message={fieldState.error?.message} />
+            setText(formatPercentageDraft(n))
+            field.onBlur()
+          }}
+          onChange={(e) => {
+            const raw = e.target.value
+            setText(raw)
+            const n = parsePercentageInput(raw)
+            if (!Number.isNaN(n)) {
+              field.onChange(n)
+            }
+          }}
+        />
+        <span className="pointer-events-none absolute top-1/2 right-2 z-10 -translate-y-1/2 text-xs text-muted-foreground select-none">
+          %
+        </span>
+      </div>
+      <div className="space-y-0.5">
+        <FieldHint id={hintId}>0–100; % is optional.</FieldHint>
+        <FieldError message={fieldState.error?.message} />
+      </div>
     </div>
   )
 }
@@ -221,7 +252,7 @@ function PhoneEditableInput<T extends FieldValues>({
   }, [field.value])
 
   return (
-    <div className="min-w-40 space-y-0.5">
+    <div className="w-full min-w-0 space-y-1">
       <Input
         type="tel"
         autoComplete="tel"
@@ -229,7 +260,7 @@ function PhoneEditableInput<T extends FieldValues>({
         autoFocus={autoFocus}
         aria-invalid={fieldState.invalid || undefined}
         aria-describedby={hintId}
-        className="h-8"
+        className="h-8 w-full min-w-0"
         value={text}
         onFocus={() => {
           focusedRef.current = true
@@ -247,10 +278,12 @@ function PhoneEditableInput<T extends FieldValues>({
           field.onChange(raw)
         }}
       />
-      <FieldHint id={hintId}>
-        Stored as E.164. Ten-digit US numbers are prefixed with +1 on blur.
-      </FieldHint>
-      <FieldError message={fieldState.error?.message} />
+      <div className="space-y-0.5">
+        <FieldHint id={hintId}>
+          Stored as E.164. Ten-digit US numbers are prefixed with +1 on blur.
+        </FieldHint>
+        <FieldError message={fieldState.error?.message} />
+      </div>
     </div>
   )
 }
@@ -272,7 +305,7 @@ function BuiltinSelectEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-32 space-y-0.5">
+        <div className="w-full min-w-0 space-y-1">
           <Select
             value={String(field.value ?? "")}
             onValueChange={field.onChange}
@@ -280,7 +313,7 @@ function BuiltinSelectEditor<T extends FieldValues>({
             <SelectTrigger
               size="sm"
               aria-invalid={fieldState.invalid || undefined}
-              className="h-8 min-h-8 w-full px-0.5"
+              className="h-8 min-h-8 w-full min-w-0 px-0.5"
             >
               <SelectValue />
             </SelectTrigger>
@@ -308,7 +341,7 @@ function BuiltinCheckboxEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="flex flex-col items-center gap-0.5">
+        <div className="flex w-full min-w-0 flex-col items-center gap-1">
           <Checkbox
             checked={field.value === true}
             onCheckedChange={(v) => field.onChange(v === true)}
@@ -331,7 +364,7 @@ function BuiltinSwitchEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="flex flex-col items-center gap-0.5">
+        <div className="flex w-full min-w-0 flex-col items-center gap-1">
           <Switch
             checked={field.value === true}
             onCheckedChange={field.onChange}
@@ -354,15 +387,26 @@ function BuiltinDateEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-36 space-y-0.5">
+        <div className="w-full min-w-0 space-y-1">
           <Input
-            {...field}
-            value={String(field.value ?? "")}
-            type="date"
+            type="text"
+            placeholder="YYYY-MM-DD"
+            autoComplete="off"
             autoFocus={autoFocus}
             aria-invalid={fieldState.invalid || undefined}
-            className="h-8"
-            onChange={(e) => field.onChange(e.target.value)}
+            className="h-8 w-full min-w-0 tabular-nums"
+            value={String(field.value ?? "")}
+            onBlur={field.onBlur}
+            name={field.name}
+            ref={field.ref}
+            onChange={(e) =>
+              field.onChange(normalizeNepaliDigitsToAscii(e.target.value))
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.stopPropagation()
+              }
+            }}
           />
           <FieldError message={fieldState.error?.message} />
         </div>
@@ -441,23 +485,39 @@ function BuiltinNumberEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-20 space-y-0.5">
+        <div className="w-full min-w-0 space-y-1">
           <Input
-            type="number"
-            inputMode="decimal"
+            type="text"
+            inputMode="numeric"
             autoFocus={autoFocus}
             aria-invalid={fieldState.invalid || undefined}
-            className="h-8"
+            className="h-8 w-full min-w-0 tabular-nums"
             value={
               typeof field.value === "number" && Number.isFinite(field.value)
-                ? field.value
+                ? String(field.value)
                 : typeof field.value === "string"
                   ? field.value
                   : ""
             }
+            onBlur={field.onBlur}
+            name={field.name}
+            ref={field.ref}
             onChange={(e) => {
-              const v = e.target.value
-              field.onChange(v === "" ? "" : Number(v))
+              const ascii = normalizeNepaliDigitsToAscii(e.target.value).trim()
+              if (ascii === "") {
+                field.onChange("")
+                return
+              }
+              if (/^\d+$/.test(ascii)) {
+                field.onChange(Number.parseInt(ascii, 10))
+              } else {
+                field.onChange(ascii)
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.stopPropagation()
+              }
             }}
           />
           <FieldError message={fieldState.error?.message} />
@@ -477,14 +537,14 @@ function BuiltinTextEditor<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="min-w-24 space-y-0.5">
+        <div className="w-full min-w-0 space-y-1">
           <Input
             {...field}
             value={String(field.value ?? "")}
             type="text"
             autoFocus={autoFocus}
             aria-invalid={fieldState.invalid || undefined}
-            className="h-8"
+            className="h-8 w-full min-w-0"
             onChange={(e) => field.onChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
@@ -524,6 +584,8 @@ type CellEditorProps<T extends FieldValues> = {
   inputType: DataTableInputType | undefined
   options?: ReadonlyArray<{ value: string; label: string }>
   autoFocus?: boolean
+  /** From column `meta.align`; toggles default to centered helpers when omitted. */
+  cellAlign?: "left" | "right" | "center"
   customEditors?: Partial<
     Record<
       string,
@@ -542,12 +604,23 @@ export function DataTableCellEditor<T extends FieldValues>({
   inputType,
   options,
   autoFocus,
+  cellAlign,
   customEditors,
 }: CellEditorProps<T>) {
+  const resolvedAlign =
+    cellAlign ??
+    (inputType === "switch" || inputType === "checkbox" ? "center" : "left")
+
+  const wrap = (node: ReactElement) => (
+    <CellEditorShell align={resolvedAlign}>{node}</CellEditorShell>
+  )
+
   const key = typeof inputType === "string" ? inputType : undefined
   const Custom = key ? customEditors?.[key] : undefined
   if (Custom) {
-    return <Custom control={control} columnId={name} autoFocus={autoFocus} />
+    return wrap(
+      <Custom control={control} columnId={name} autoFocus={autoFocus} />
+    )
   }
 
   const builtinKey: DataTableBuiltinInputType =
@@ -557,17 +630,21 @@ export function DataTableCellEditor<T extends FieldValues>({
 
   const Builtin = BUILTIN_CELL_EDITORS[builtinKey]
   if (Builtin) {
-    return Builtin({
-      control: control as Control<FieldValues>,
-      name: name as FieldPath<FieldValues>,
-      options,
-      autoFocus,
-    })
+    return wrap(
+      Builtin({
+        control: control as Control<FieldValues>,
+        name: name as FieldPath<FieldValues>,
+        options,
+        autoFocus,
+      })
+    )
   }
 
-  return BuiltinTextEditor({
-    control: control as Control<FieldValues>,
-    name: name as FieldPath<FieldValues>,
-    autoFocus,
-  })
+  return wrap(
+    BuiltinTextEditor({
+      control: control as Control<FieldValues>,
+      name: name as FieldPath<FieldValues>,
+      autoFocus,
+    })
+  )
 }

@@ -542,9 +542,9 @@ export function DataTable<
       ...columns,
       {
         id: "_actions",
-        size: 112,
-        minSize: 96,
-        maxSize: 200,
+        size: 168,
+        minSize: 132,
+        maxSize: 240,
         enableSorting: false,
         enableResizing: false,
         enableHiding: false,
@@ -558,11 +558,11 @@ export function DataTable<
           const rowBusy = edit?.rowId === row.id
           if (rowBusy) {
             return (
-              <div className="flex items-center justify-start gap-1">
+              <div className="flex w-full max-w-full min-w-0 flex-wrap items-center gap-1">
                 <Button
                   variant="default"
                   size="sm"
-                  className="h-8 gap-1 px-2"
+                  className="h-8 shrink-0 gap-1 px-2"
                   type="button"
                   onClick={() => void handleSaveClick()}
                   disabled={saving}
@@ -574,7 +574,7 @@ export function DataTable<
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1 px-2"
+                  className="h-8 shrink-0 gap-1 px-2"
                   type="button"
                   onClick={handleCancel}
                   disabled={saving}
@@ -587,7 +587,7 @@ export function DataTable<
             )
           }
           return (
-            <div className="flex items-center justify-start gap-1">
+            <div className="flex w-full max-w-full min-w-0 flex-wrap items-center gap-1">
               {rowEditEnabled && (
                 <Button
                   variant="ghost"
@@ -1016,10 +1016,11 @@ export function DataTable<
                       colSpan={header.colSpan}
                       style={{
                         width: header.getSize(),
+                        maxWidth: header.getSize(),
                         position: "relative",
                       }}
                       className={cn(
-                        "h-auto min-h-0 py-1.5 align-top whitespace-normal"
+                        "box-border h-auto min-h-0 min-w-0 py-1.5 align-top whitespace-normal"
                       )}
                     >
                       {header.isPlaceholder ? null : (
@@ -1063,18 +1064,31 @@ export function DataTable<
                   {visibleLeafColumns.map((col, colIdx) => {
                     const align = col.columnDef.meta?.align ?? "left"
                     const widthFrac =
-                      colIdx % 4 === 0 ? "w-[92%]" : colIdx % 4 === 1 ? "w-[72%]" : colIdx % 4 === 2 ? "w-[88%]" : "w-[64%]"
+                      colIdx % 4 === 0
+                        ? "w-[92%]"
+                        : colIdx % 4 === 1
+                          ? "w-[72%]"
+                          : colIdx % 4 === 2
+                            ? "w-[88%]"
+                            : "w-[64%]"
                     return (
                       <TableCell
                         key={`dt-skeleton-${skIdx}-${col.id}`}
-                        style={{ width: col.getSize() }}
+                        style={{
+                          width: col.getSize(),
+                          maxWidth: col.getSize(),
+                        }}
                         className={cn(
+                          "box-border min-w-0 overflow-hidden",
                           align === "right" && "text-right",
                           align === "center" && "text-center"
                         )}
                       >
                         <Skeleton
-                          className={cn("inline-block h-7 max-w-full", widthFrac)}
+                          className={cn(
+                            "inline-block h-7 max-w-full",
+                            widthFrac
+                          )}
                           aria-hidden
                         />
                       </TableCell>
@@ -1114,6 +1128,8 @@ export function DataTable<
                         ((isRowEditing && editable) ||
                           (activeCellEdit && editable && cellEditEnabled))
 
+                      const cellPx = cell.column.getSize()
+
                       if (showInput) {
                         const columnId = cell.column
                           .id as FieldPath<TFormValues>
@@ -1122,11 +1138,13 @@ export function DataTable<
                           <TableCell
                             key={cell.id}
                             style={{
-                              width: cell.column.getSize(),
+                              width: cellPx,
+                              maxWidth: cellPx,
                             }}
                             className={cn(
                               align === "right" && "text-right",
-                              align === "center" && "text-center"
+                              align === "center" && "text-center",
+                              "box-border min-w-0 overflow-hidden align-top whitespace-normal"
                             )}
                           >
                             {meta?.renderEditor?.({
@@ -1140,6 +1158,7 @@ export function DataTable<
                                 inputType={meta?.inputType}
                                 options={meta?.options}
                                 autoFocus={activeCellEdit}
+                                cellAlign={align}
                                 customEditors={customEditors}
                               />
                             )}
@@ -1152,6 +1171,9 @@ export function DataTable<
                         edit !== null &&
                         rowEditEnabled &&
                         edit.rowId === row.id
+
+                      const readOnlyInRowEdit =
+                        isRowEditing && !editable && !showInput
 
                       const canNavigateToCellEdit =
                         cellEditEnabled &&
@@ -1169,7 +1191,8 @@ export function DataTable<
                         <TableCell
                           key={cell.id}
                           style={{
-                            width: cell.column.getSize(),
+                            width: cellPx,
+                            maxWidth: cellPx,
                           }}
                           onClick={
                             canNavigateToCellEdit
@@ -1182,6 +1205,9 @@ export function DataTable<
                               : undefined
                           }
                           className={cn(
+                            "box-border min-w-0",
+                            readOnlyInRowEdit &&
+                              "overflow-hidden align-top whitespace-normal",
                             align === "right" && "text-right",
                             align === "center" && "text-center",
                             canNavigateToCellEdit &&
@@ -1205,26 +1231,41 @@ export function DataTable<
 
       <div
         className={cn(
-          "flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3 sm:justify-between",
+          "flex min-w-0 flex-col gap-4 pt-1",
+          "md:flex-row md:flex-nowrap md:items-center md:justify-between md:gap-6 md:pt-0",
           cardHeaderInsetX
         )}
       >
-        <p className="text-xs text-muted-foreground">
+        <p className="shrink-0 text-center text-xs leading-none text-muted-foreground md:text-left">
           {totalRows === 0
             ? "0 rows"
             : `Showing ${pageStart}–${pageEnd} of ${totalRows}`}
         </p>
-        <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs whitespace-nowrap text-muted-foreground">
-              Rows per page
-            </span>
+
+        <div
+          className={cn(
+            "flex w-full min-w-0 flex-col items-center gap-3",
+            "md:w-auto md:flex-row md:flex-nowrap md:items-center md:justify-end md:gap-5"
+          )}
+        >
+          <div className="flex h-8 shrink-0 items-center justify-center gap-2 md:justify-end">
+            <label
+              htmlFor="dt-page-size"
+              className="text-xs leading-none whitespace-nowrap text-muted-foreground"
+            >
+              <span className="md:hidden">Rows</span>
+              <span className="hidden md:inline">Rows per page</span>
+            </label>
             <Select
               value={String(table.getState().pagination.pageSize)}
               onValueChange={(v) => table.setPageSize(Number(v))}
               disabled={isLoading}
             >
-              <SelectTrigger size="sm" className="h-8 w-18">
+              <SelectTrigger
+                id="dt-page-size"
+                size="sm"
+                className="h-8 min-w-17 shrink-0"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1236,48 +1277,89 @@ export function DataTable<
               </SelectContent>
             </Select>
           </div>
-          <Pagination className="mx-0 w-auto justify-end">
-            <PaginationContent>
-              <PaginationItem>
+
+          {pageCount > 1 ? (
+            <>
+              <nav
+                aria-label="Pagination"
+                className="flex w-full max-w-md items-center justify-center gap-2 px-1 md:hidden"
+              >
                 <PaginationPrevious
                   type="button"
+                  className="shrink-0"
                   disabled={
-                    isLoading ||
-                    totalRows === 0 ||
-                    !table.getCanPreviousPage()
+                    isLoading || totalRows === 0 || !table.getCanPreviousPage()
                   }
                   onClick={() => table.previousPage()}
                 />
-              </PaginationItem>
-              {pageNumbers.map((item) =>
-                item.type === "ellipsis" ? (
-                  <PaginationItem key={item.key}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={item.n}>
-                    <PaginationLink
-                      type="button"
-                      isActive={item.n === currentPage}
-                      disabled={isLoading}
-                      onClick={() => table.setPageIndex(item.n - 1)}
-                    >
-                      {item.n}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              )}
-              <PaginationItem>
+                <span
+                  className="min-w-20 shrink-0 text-center text-xs font-medium text-foreground tabular-nums"
+                  aria-current="page"
+                >
+                  Page {currentPage} of {pageCount}
+                </span>
                 <PaginationNext
                   type="button"
+                  className="shrink-0"
                   disabled={
                     isLoading || totalRows === 0 || !table.getCanNextPage()
                   }
                   onClick={() => table.nextPage()}
                 />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+              </nav>
+
+              <Pagination
+                className={cn(
+                  "mx-0 hidden min-w-0 pb-0.5 [-webkit-overflow-scrolling:touch]",
+                  "md:inline-flex md:h-8 md:w-max md:max-w-[min(100vw-12rem,32rem)] md:min-w-0 md:shrink md:items-center md:justify-end md:overflow-x-auto md:overflow-y-visible md:pb-0 lg:max-w-none"
+                )}
+              >
+                <PaginationContent className="flex w-max min-w-0 flex-nowrap items-center justify-center gap-1 md:justify-end">
+                  <PaginationItem>
+                    <PaginationPrevious
+                      type="button"
+                      className="shrink-0"
+                      disabled={
+                        isLoading ||
+                        totalRows === 0 ||
+                        !table.getCanPreviousPage()
+                      }
+                      onClick={() => table.previousPage()}
+                    />
+                  </PaginationItem>
+                  {pageNumbers.map((item) =>
+                    item.type === "ellipsis" ? (
+                      <PaginationItem key={item.key}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={item.n}>
+                        <PaginationLink
+                          type="button"
+                          className="shrink-0"
+                          isActive={item.n === currentPage}
+                          disabled={isLoading}
+                          onClick={() => table.setPageIndex(item.n - 1)}
+                        >
+                          {item.n}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      type="button"
+                      className="shrink-0"
+                      disabled={
+                        isLoading || totalRows === 0 || !table.getCanNextPage()
+                      }
+                      onClick={() => table.nextPage()}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </>
+          ) : null}
         </div>
       </div>
     </div>
