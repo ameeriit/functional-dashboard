@@ -62,6 +62,7 @@ export function UsersTable({
           draftResolver={userDraftResolver}
           getDraftDefaults={getUserDraftDefaults}
           emptyState="No team members yet."
+          tableCaption="Workspace team members, roles, contact details, and activity"
         />
       </div>
     </Card>

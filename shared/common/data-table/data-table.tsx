@@ -7,6 +7,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type Column,
   type ColumnDef,
   type FilterFn,
   type Header,
@@ -56,6 +57,7 @@ import {
 } from "@/shared/ui/select"
 import {
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -109,6 +111,8 @@ export type DataTableProps<
   initialPageSize?: number
   pageSizeOptions?: number[]
   showColumnFilters?: boolean
+  /** Announced as the table caption for assistive tech (visually hidden; pair with a visible heading nearby). */
+  tableCaption?: string
 }
 
 type EditState = {
@@ -233,6 +237,7 @@ export function DataTable<
   initialPageSize = 8,
   pageSizeOptions = [5, 10, 25],
   showColumnFilters = true,
+  tableCaption,
 }: DataTableProps<TData, TFormValues>) {
   const editingEnabled = editMode !== "off"
 
@@ -363,6 +368,33 @@ export function DataTable<
       setEdit({ rowId, columnId })
     },
     [form, onEdit]
+  )
+
+  const handleColumnResizeKeyDown = React.useCallback(
+    (e: React.KeyboardEvent, column: Column<TData, unknown>) => {
+      const min = column.columnDef.minSize ?? 84
+      const max = column.columnDef.maxSize ?? 560
+      const cur = column.getSize()
+      const step = e.shiftKey ? 40 : 10
+      let next: number | null = null
+      if (e.key === "ArrowLeft") {
+        e.preventDefault()
+        next = Math.max(min, cur - step)
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault()
+        next = Math.min(max, cur + step)
+      } else if (e.key === "Home") {
+        e.preventDefault()
+        next = min
+      } else if (e.key === "End") {
+        e.preventDefault()
+        next = max
+      }
+      if (next !== null && next !== cur) {
+        setColumnSizing((prev) => ({ ...prev, [column.id]: next }))
+      }
+    },
+    []
   )
 
   const augmentedColumns = React.useMemo<ColumnDef<TData, unknown>[]>(() => {
@@ -729,6 +761,9 @@ export function DataTable<
 
       <div className="relative isolate max-w-full min-w-0 overflow-x-auto overscroll-x-contain rounded-none border border-border">
         <table className="w-full table-fixed caption-bottom text-xs">
+          {tableCaption ? (
+            <TableCaption className="sr-only">{tableCaption}</TableCaption>
+          ) : null}
           <TableHeader className="bg-muted/40 [&_tr]:border-b">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -756,13 +791,21 @@ export function DataTable<
                         </div>
                       )}
                       {canResize ? (
-                        <button
-                          type="button"
+                        <div
+                          role="separator"
+                          tabIndex={0}
+                          aria-orientation="vertical"
+                          aria-valuenow={Math.round(header.column.getSize())}
+                          aria-valuemin={header.column.columnDef.minSize ?? 84}
+                          aria-valuemax={header.column.columnDef.maxSize ?? 560}
                           aria-label={`Resize ${header.column.id} column`}
                           onMouseDown={header.getResizeHandler()}
                           onTouchStart={header.getResizeHandler()}
+                          onKeyDown={(e) =>
+                            handleColumnResizeKeyDown(e, header.column)
+                          }
                           className={cn(
-                            "absolute top-0 right-0 z-10 h-full w-1 cursor-col-resize touch-none rounded-none border-r border-transparent bg-border/80 opacity-0 select-none hover:opacity-100",
+                            "absolute top-0 right-0 z-10 h-full w-1 cursor-col-resize touch-none rounded-none border-r border-transparent bg-border/80 opacity-0 select-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:outline-none",
                             header.column.getIsResizing() &&
                               "bg-primary/60 opacity-100"
                           )}
