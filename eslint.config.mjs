@@ -4,9 +4,7 @@ import { createTypeScriptImportResolver } from "eslint-import-resolver-typescrip
 import importX from "eslint-plugin-import-x"
 import { defineConfig, globalIgnores } from "eslint/config"
 
-// Add a folder name here whenever a new view is created. The cross-view
-// import ban below generates one zone per ordered pair (a, b) of distinct
-// views, forbidding `views/a/...` from importing `views/b/...`.
+// Register every view here so the cross-view import ban below covers it.
 const views = ["overview", "users"]
 
 const crossViewZones = views.flatMap((target) =>

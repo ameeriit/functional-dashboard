@@ -1,8 +1,11 @@
 "use client"
 
-import { MoreHorizontal, Search, UserPlus } from "lucide-react"
+import type { ColumnDef } from "@tanstack/react-table"
+import { Search, UserPlus } from "lucide-react"
 import * as React from "react"
+import { toast } from "sonner"
 
+import { formatLastActive, getInitials } from "@/shared/lib/format"
 import { cn } from "@/shared/lib/utils"
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar"
 import { Badge } from "@/shared/ui/badge"
@@ -14,24 +17,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu"
+import { DataTable } from "@/shared/common/data-table"
 import { Input } from "@/shared/ui/input"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table"
-
-import { formatLastActive, getInitials } from "@/shared/lib/format"
+  deleteUser,
+  updateUser,
+  type UserRoleOption,
+  type UserStatusOption,
+} from "@/views/users/api/users-data"
 import type { User, UserStatus } from "@/views/users/entities/types"
 
 const statusStyles: Record<UserStatus, string> = {
@@ -48,8 +41,123 @@ const statusLabel: Record<UserStatus, string> = {
   suspended: "Suspended",
 }
 
-export function UsersTable({ users }: { users: User[] }) {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const FIELD_LABELS: Partial<Record<keyof User, string>> = {
+  name: "name",
+  email: "email",
+  role: "role",
+  status: "status",
+}
+
+function describePatch(patch: Partial<User>): string {
+  const fields = (Object.keys(patch) as (keyof User)[])
+    .map((k) => FIELD_LABELS[k])
+    .filter((label): label is string => Boolean(label))
+  if (fields.length === 0) return "Saved."
+  if (fields.length === 1) return `Updated ${fields[0]}.`
+  if (fields.length === 2) return `Updated ${fields[0]} and ${fields[1]}.`
+  return `Updated ${fields.slice(0, -1).join(", ")}, and ${fields.at(-1)}.`
+}
+
+function validateUserDraft(user: User, patch: Partial<User>): string | null {
+  const next = { ...user, ...patch }
+  const name = next.name.trim()
+  if (!name) {
+    return "Name is required."
+  }
+  const email = next.email.trim()
+  if (!EMAIL_RE.test(email)) {
+    return "Enter a valid email address."
+  }
+  return null
+}
+
+function buildColumns(
+  roles: UserRoleOption[],
+  statuses: UserStatusOption[]
+): ColumnDef<User, unknown>[] {
+  return [
+    {
+      id: "avatar",
+      header: "",
+      size: 56,
+      meta: { align: "center" },
+      cell: ({ row }) => (
+        <Avatar className="size-8">
+          <AvatarFallback className="bg-primary/10 text-xs text-primary">
+            {getInitials(row.original.name)}
+          </AvatarFallback>
+        </Avatar>
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+      meta: { editable: true, inputType: "text" },
+      cell: ({ getValue }) => (
+        <span className="font-medium">{String(getValue())}</span>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      meta: { editable: true, inputType: "text" },
+      cell: ({ getValue }) => (
+        <span className="text-muted-foreground">{String(getValue())}</span>
+      ),
+    },
+    {
+      accessorKey: "role",
+      header: "Role",
+      meta: { editable: true, inputType: "select", options: roles },
+      cell: ({ getValue }) => (
+        <Badge variant="secondary">{String(getValue())}</Badge>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      meta: { editable: true, inputType: "select", options: statuses },
+      cell: ({ getValue }) => {
+        const status = getValue() as UserStatus
+        return (
+          <Badge
+            variant="outline"
+            className={cn("capitalize", statusStyles[status])}
+          >
+            {statusLabel[status]}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "lastActive",
+      header: "Last active",
+      cell: ({ getValue }) => (
+        <span className="text-muted-foreground">
+          {formatLastActive(String(getValue()))}
+        </span>
+      ),
+    },
+  ]
+}
+
+export function UsersTable({
+  users: initialUsers,
+  roles,
+  statuses,
+}: {
+  users: User[]
+  roles: UserRoleOption[]
+  statuses: UserStatusOption[]
+}) {
+  const [users, setUsers] = React.useState(initialUsers)
   const [query, setQuery] = React.useState("")
+  const columns = React.useMemo(
+    () => buildColumns(roles, statuses),
+    [roles, statuses]
+  )
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -62,13 +170,50 @@ export function UsersTable({ users }: { users: User[] }) {
     )
   }, [users, query])
 
+  const handleSave = React.useCallback(
+    async (user: User, patch: Partial<User>) => {
+      try {
+        const updated = await updateUser(user.id, patch)
+        setUsers((prev) => prev.map((u) => (u.id === user.id ? updated : u)))
+        toast.success(`Updated ${updated.name}`, {
+          description: describePatch(patch),
+        })
+      } catch (error) {
+        toast.error(`Couldn't update ${user.name}`, {
+          description:
+            error instanceof Error ? error.message : "Please try again.",
+        })
+        throw error
+      }
+    },
+    []
+  )
+
+  const handleDelete = React.useCallback(async (user: User) => {
+    try {
+      await deleteUser(user.id)
+      setUsers((prev) => prev.filter((u) => u.id !== user.id))
+      toast.success(`Removed ${user.name}`, {
+        description: `${user.email} no longer has access.`,
+      })
+    } catch (error) {
+      toast.error(`Couldn't remove ${user.name}`, {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      })
+      throw error
+    }
+  }, [])
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-base">Team members</CardTitle>
         <CardDescription>
-          {filtered.length} of {users.length}{" "}
-          {users.length === 1 ? "person" : "people"} shown
+          View mode by default. Use &quot;Edit&quot; to edit a whole row, or
+          click Role or Status (and Name / Email) to edit one field. Save
+          applies changes; Cancel discards drafts — nothing updates until you
+          save.
         </CardDescription>
         <CardAction className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <div className="relative w-full sm:w-64">
@@ -88,89 +233,23 @@ export function UsersTable({ users }: { users: User[] }) {
         </CardAction>
       </CardHeader>
 
-      <div className="overflow-x-auto border-t">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead className="hidden md:table-cell">Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden lg:table-cell">
-                Last active
-              </TableHead>
-              <TableHead className="w-10 text-right">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No users match your search.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="size-8">
-                        <AvatarFallback className="bg-primary/10 text-xs text-primary">
-                          {getInitials(user.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{user.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {user.email}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <Badge variant="secondary">{user.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn("capitalize", statusStyles[user.status])}
-                    >
-                      {statusLabel[user.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground lg:table-cell">
-                    {formatLastActive(user.lastActive)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Actions for ${user.name}`}
-                        >
-                          <MoreHorizontal />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View profile</DropdownMenuItem>
-                        <DropdownMenuItem>Edit role</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive">
-                          Remove
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="border-t">
+        <DataTable
+          columns={columns}
+          data={filtered}
+          getRowId={(u) => u.id}
+          editMode="both"
+          onSave={handleSave}
+          onDelete={handleDelete}
+          deleteConfirm={{
+            title: (user) => `Remove ${user.name}?`,
+            description: (user) =>
+              `${user.email} will lose access to this workspace. This action cannot be undone.`,
+            confirmLabel: "Remove",
+          }}
+          validateDraft={validateUserDraft}
+          emptyState="No users match your search."
+        />
       </div>
     </Card>
   )

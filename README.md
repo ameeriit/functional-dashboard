@@ -35,7 +35,7 @@ Open [http://localhost:3000](http://localhost:3000).
 pnpm dlx shadcn@latest add <component>
 ```
 
-Components land in `shared/ui/` per the aliases in `components.json`.
+Components added via `shadcn add` land in `shared/ui/` per the aliases in `components.json`. Custom components we author belong in `shared/common/` — see the layer table below.
 
 ## Architecture
 
@@ -45,13 +45,18 @@ The codebase has a two-layer split: **`app/` is routing only**, and **`views/` h
 app/                    Next.js routes only (page.tsx, layout.tsx, route.ts)
 views/                  Page implementations, one folder per view
 shared/
-├── ui/                 Generic shadcn primitives
+├── ui/                 shadcn primitives ONLY (came from `shadcn add`).
+│                       Treat as vendored — minimal edits, easy to re-sync.
 ├── lib/                Generic utilities (cn, format helpers)
 ├── layout/             Layout shells (AppShell, ...)
-└── common/             Concrete app-level chrome (AppSidebar, SiteHeader)
+└── common/             Everything we authored that isn't a shadcn primitive:
+                          • generic compositions (DataTable, ConfirmDialog)
+                          • app-level chrome (AppSidebar, SiteHeader)
 providers/              App-wide React providers (theme, ...)
 hooks/                  Generic React hooks
 ```
+
+The `shared/ui/` ↔ `shared/common/` split is by **origin**, not purpose. A file lives in `shared/ui/` if and only if `shadcn add <name>` produced it (the file maps 1:1 with the shadcn registry). Anything we wrote ourselves — even a thin wrapper over a primitive — goes in `shared/common/`.
 
 ### Always use alias imports
 
@@ -204,7 +209,12 @@ If a route file grows beyond ~10–15 lines, extract whatever is growing into th
 
 ### `shared/common/` discipline
 
-`shared/common/` holds concrete app-level layout chrome (AppSidebar, SiteHeader). It has **one rule**: only static, app-wide layout chrome with no per-request data. The day a piece needs the current user, dynamic role-based nav, or feature data, it stops being chrome — it either becomes a view or accepts data via props from a layout/route. Resist the temptation to use `common/` as a junk drawer.
+`shared/common/` holds two kinds of files:
+
+1. **Generic compositions** we authored over shadcn primitives or other libraries (`DataTable`, `ConfirmDialog`). These are app-agnostic; nothing in them references a specific view, route, or piece of feature data.
+2. **App-level chrome** that hardcodes app-wide static things — brand, nav literal, header layout (`AppSidebar`, `SiteHeader`).
+
+Both share **one rule**: no per-request data and no feature logic. The day a piece needs the current user, dynamic role-based nav, or feature data, it stops being shared — it either becomes a view or accepts data via props from a layout/route. Resist the temptation to use `common/` as a junk drawer for "stuff we'll generalize later".
 
 ### Statically enforced invariants
 
@@ -246,3 +256,10 @@ Sub-features can be added at any level — view root, inside `_components/<comp>
 ### Removing a page or sub-feature
 
 Delete the folder. Remove its single import line from the parent (route, page, or component). For a top-level page, also remove its line from the sidebar `nav`. Done.
+
+### A shared component
+
+Decide by origin:
+
+- **shadcn primitive** (e.g., `pnpm dlx shadcn@latest add tabs`) → lands in `shared/ui/`. `components.json` is already configured for this; don't change it. Treat the result as vendored — keep edits surgical so a future `shadcn add --overwrite` re-sync stays painless.
+- **Anything else we author** (generic composition, app-level chrome) → put it in `shared/common/<name>.tsx`. Compositions over shadcn primitives belong here, not in `shared/ui/`.

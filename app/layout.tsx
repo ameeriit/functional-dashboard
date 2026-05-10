@@ -1,6 +1,7 @@
 import { DM_Sans, Geist_Mono, Outfit } from "next/font/google"
 
 import { ThemeProvider } from "@/providers/theme-provider"
+import { Toaster } from "@/shared/ui/sonner"
 import { TooltipProvider } from "@/shared/ui/tooltip"
 import { cn } from "@/shared/lib/utils"
 import "./globals.css"
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

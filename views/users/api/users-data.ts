@@ -1,4 +1,20 @@
-import type { User } from "@/views/users/entities/types"
+import type { User, UserRole, UserStatus } from "@/views/users/entities/types"
+
+export type UserRoleOption = { value: UserRole; label: string }
+export type UserStatusOption = { value: UserStatus; label: string }
+
+const mockUserRoles: UserRoleOption[] = [
+  { value: "Owner", label: "Owner" },
+  { value: "Admin", label: "Admin" },
+  { value: "Member", label: "Member" },
+  { value: "Viewer", label: "Viewer" },
+]
+
+const mockUserStatuses: UserStatusOption[] = [
+  { value: "active", label: "Active" },
+  { value: "invited", label: "Invited" },
+  { value: "suspended", label: "Suspended" },
+]
 
 const mockUsers: User[] = [
   {
@@ -69,4 +85,29 @@ const mockUsers: User[] = [
 
 export async function getUsers(): Promise<User[]> {
   return mockUsers
+}
+
+export async function getUserRoles(): Promise<UserRoleOption[]> {
+  return mockUserRoles
+}
+
+export async function getUserStatuses(): Promise<UserStatusOption[]> {
+  return mockUserStatuses
+}
+
+export async function updateUser(
+  id: string,
+  patch: Partial<Omit<User, "id">>
+): Promise<User> {
+  const index = mockUsers.findIndex((u) => u.id === id)
+  if (index === -1) throw new Error(`User ${id} not found`)
+  mockUsers[index] = { ...mockUsers[index], ...patch }
+  return mockUsers[index]
+}
+
+export async function deleteUser(id: string): Promise<{ id: string }> {
+  const index = mockUsers.findIndex((u) => u.id === id)
+  if (index === -1) throw new Error(`User ${id} not found`)
+  mockUsers.splice(index, 1)
+  return { id }
 }

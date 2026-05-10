@@ -4,6 +4,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
+import { useHasMounted } from "@/hooks/use-has-mounted"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/ui/button"
@@ -498,6 +499,8 @@ function SidebarMenuButton({
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const Comp = asChild ? Slot.Root : "button"
   const { isMobile, state } = useSidebar()
+  // Defer Tooltip until after hydration to avoid Radix aria-describedby id mismatch.
+  const mounted = useHasMounted()
 
   const button = (
     <Comp
@@ -510,7 +513,7 @@ function SidebarMenuButton({
     />
   )
 
-  if (!tooltip) {
+  if (!tooltip || !mounted) {
     return button
   }
 
